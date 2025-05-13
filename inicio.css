@@ -1,0 +1,28 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  .vh-90 {
+  height: 90vh; /* ocupa el 90% del alto de la ventana */
+}
+  
+  .full-height {
+    height: 100vh;
+  }
+  
+  .card-login {
+    width: 100%;
+    max-width: 500px;
+    min-height: 90vh; /* Esto fuerza a que la tarjeta sea más alta */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem;
+  }
+  
+  .logo-img {
+    max-height: 200px;
+    object-fit: contain;
+  }
+  

@@ -1,0 +1,41 @@
+.carousel-item img {
+    height: 450px;
+    object-fit: cover;
+}
+.card-img-top {
+  height: 200px; /* altura fija para todas las imágenes */
+  object-fit: cover; /* recorta la imagen para que encaje */
+}
+
+.card {
+  height: 100%; /* asegura que todas las cards crezcan igual */
+  display: flex;
+  flex-direction: column;
+}
+
+.card-body {
+  flex-grow: 1; /* ocupa el espacio disponible */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+/* Selector de talles */
+.talles-selector {
+  margin-top: 10px;
+}
+
+.talles-selector select {
+  width: 100%;
+  padding: 5px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+/* Ajustes para la imagen de los productos */
+.card-img-top {
+  height: 200px; /* altura fija para todas las imágenes */
+  object-fit: cover; /* recorta la imagen para que encaje */
+}
+
+
