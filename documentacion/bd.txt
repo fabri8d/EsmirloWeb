@@ -1,0 +1,76 @@
+PASO 1: Descargar e instalar PostgreSQL
+Entrá a este enlace oficial:
+👉 https://www.postgresql.org/download/windows/
+
+Hacé clic en el instalador de Windows (EDB Installer):
+Esto te redirige a:
+👉 https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
+
+Elegí tu versión (recomiendo la última estable, por ejemplo: 16.x) y bajá el instalador.
+
+Ejecutá el instalador y seguí estos pasos:
+
+Elegí los componentes predeterminados ✅ (asegurate de incluir pgAdmin y Command Line Tools)
+
+Elegí una contraseña segura para el usuario postgres y anótala (la vamos a usar luego)
+contraseña = usuario123
+
+El puerto por defecto es 5432, dejalo así
+
+Completá la instalación
+
+🧪 PASO 2: Verificá que todo está funcionando
+a) Desde el menú de inicio:
+Abrí pgAdmin 4
+
+Te pedirá la contraseña del usuario postgres (la que pusiste en el instalador)
+
+b) Desde la terminal:
+Abrí PowerShell o CMD
+
+Escribí:
+
+bash
+Copiar código
+psql -U postgres
+Si todo está bien, deberías entrar al modo psql (línea de comandos de PostgreSQL)
+
+🧱 PASO 3: Crear base de datos y usuario (si querés)
+Una vez dentro de psql, escribí:
+
+sql
+
+CREATE DATABASE mi_basededatos;
+CREATE USER midu_usuario WITH PASSWORD 'mi_contraseña';
+GRANT ALL PRIVILEGES ON DATABASE mi_basededatos TO midu_usuario;
+Si vas a usar solo el usuario postgres, no hace falta crear uno nuevo.
+
+🔗 PASO 4: Conectarlo con tu proyecto Node.js
+En tu archivo db.js:
+
+js
+Copiar código
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  user: 'midu_usuario', // o 'postgres'
+  host: 'localhost',
+  database: 'mi_basededatos',
+  password: 'mi_contraseña',
+  port: 5432,
+});
+
+module.exports = pool;
+
+
+ Próximo paso: Crear tu base de datos
+Hacé clic derecho sobre Databases
+
+Seleccioná Create > Database
+
+En el campo Database name, poné un nombre como:
+mi_basededatos
+
+En el campo Owner, dejá postgres
+
+Clic en Save
