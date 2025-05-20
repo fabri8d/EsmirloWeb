@@ -47,18 +47,19 @@ app.get('/prueba-db', async (req, res) => {
 // Agregar productos
 app.post('/agregar-producto', async (req, res) => {
   console.log("Solicitud POST recibida");
-  const { id_producto, nombre, descripcion, precio, cantidad } = req.body;
+  const { nombre, descripcion, precio, cantidad, categoria } = req.body;
 
-  if (!id_producto || !nombre || !descripcion || !precio || !cantidad) {
+  if (!nombre || !descripcion || !categoria || isNaN(precio) || isNaN(cantidad) || precio <= 0 || cantidad < 0){
+    console.log('Datos recibidos en backend:', req.body);
     console.log("Faltan campos obligatorios");
     return res.status(400).send('Todos los campos son requeridos');
   }
 
   try {
-    console.log("Datos recibidos:", { id_producto, nombre, descripcion, precio, cantidad });
+    console.log("Datos recibidos:", { nombre, descripcion, precio, cantidad, categoria });
     const result = await pool.query(
-      'INSERT INTO public.producto (id_producto, nombre, descripcion, precio, cantidad) VALUES ($1, $2, $3, $4, $5)',
-      [id_producto, nombre, descripcion, precio, cantidad]
+      'INSERT INTO public.producto (nombre, descripcion, precio, cantidad, categoria) VALUES ($1, $2, $3, $4, $5)',
+      [nombre, descripcion, precio, cantidad, categoria]
     );
     res.status(201).send('Producto agregado correctamente');
   } catch (err) {
@@ -66,6 +67,7 @@ app.post('/agregar-producto', async (req, res) => {
     res.status(500).send('Error al agregar el producto');
   }
 });
+
 
 // Ruta para obtener todos los productos
 app.get('/productos', async (req, res) => {
