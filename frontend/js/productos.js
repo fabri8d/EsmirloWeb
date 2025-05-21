@@ -12,7 +12,7 @@ function showCategory(categoryId) {
 // Lógica para cargar productos desde backend
 async function cargarProductos() {
     try {
-        const response = await fetch('/productos');
+        const response = await fetch('/products/getProducts');
         if (!response.ok) throw new Error('Error al cargar productos');
 
         const productos = await response.json();
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const response = await fetch('/agregar-producto', {
+            const response = await fetch('/products/createProduct', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(nuevoProducto)

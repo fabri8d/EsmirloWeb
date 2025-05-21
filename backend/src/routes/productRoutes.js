@@ -9,5 +9,6 @@ router.post("/createProduct", authenticateToken, authorizeAdmin, createProduct);
 router.post("/changePrice", authenticateToken, authorizeAdmin, changePriceProduct);
 //Cualquier usuario
 router.post("/purchase", authenticateToken, purchaseVariant);
-// router.get("/categories", authenticateToken, getCategories);
+
+
 module.exports = router;

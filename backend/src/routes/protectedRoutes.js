@@ -10,7 +10,7 @@ router.post("/products", authenticateToken, authorizeAdmin, productController.cr
 router.put("/products/:id/price", authenticateToken, authorizeAdmin, productController.changePrice);
 
 // Ver productos → cualquiera (si lo permitís)
-router.get("/products", productController.getAllProducts);
+// router.get("/products", productController.getAllProducts);
 
 // Comprar → cliente logueado
 router.post("/products/purchase", authenticateToken, productController.purchaseVariant);
