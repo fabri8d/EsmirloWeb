@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Gestión de Categorías</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        h1,
+        h2 {
+            color: #333;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #f5f5f5;
+            margin-bottom: 0.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        form {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        input {
+            padding: 0.5rem;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #logoutBtn {
+            background-color: #d9534f;
+            margin-top: 1rem;
+        }
+
+        #logoutBtn:hover {
+            background-color: #c9302c;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loginView">
+        <h1>Login</h1>
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Username" required />
+            <input type="password" id="password" placeholder="Contraseña" required />
+            <button type="submit">Iniciar sesión</button>
+        </form>
+    </div>
+
+    <div id="categoryView" style="display: none;">
+        <h1>Categorías</h1>
+        <button id="loadCategoriesBtn">Cargar categorías</button>
+        <ul id="categoryList"></ul>
+
+        <h2>Crear nueva categoría</h2>
+        <form id="categoryForm">
+            <input type="text" id="categoryName" placeholder="Nombre de la categoría" required />
+            <button type="submit">Crear</button>
+        </form>
+
+        <button id="logoutBtn">Cerrar sesión</button>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+
+        const loginView = document.getElementById('loginView');
+        const categoryView = document.getElementById('categoryView');
+
+        function showLogin() {
+            loginView.style.display = 'block';
+            categoryView.style.display = 'none';
+        }
+
+        function showCategories() {
+            loginView.style.display = 'none';
+            categoryView.style.display = 'block';
+        }
+
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+
+        function setToken(token) {
+            localStorage.setItem('token', token);
+        }
+
+        function clearToken() {
+            localStorage.removeItem('token');
+        }
+
+        async function fetchCategories() {
+            try {
+                const list = document.getElementById('categoryList');
+                list.innerHTML = "<li>Cargando categorías...</li>";
+
+                const res = await fetch(`${API_BASE}/categories/getCategories`, {
+                    headers: {
+                        Authorization: `Bearer ${getToken()}`
+                    }
+                });
+
+                if (res.status === 401) throw new Error("No autorizado");
+
+                const categories = await res.json();
+                list.innerHTML = "";
+
+                categories.forEach(cat => {
+                    const li = document.createElement('li');
+                    li.textContent = cat.name;
+                    list.appendChild(li);
+                });
+
+            } catch (err) {
+                alert("Token inválido o expirado. Por favor, inicia sesión nuevamente.");
+                logout();
+            }
+        }
+
+        async function createCategory(name) {
+            try {
+                const res = await fetch("http://localhost:3000/categories/createCategory", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({ name })
+                });
+
+                if (res.status === 401) throw new Error("No autorizado");
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.message || 'Error al crear categoría');
+                }
+
+                document.getElementById('categoryName').value = '';
+                fetchCategories();
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+
+        async function login(username, password) {
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!res.ok) throw new Error("Login fallido");
+
+                const data = await res.json();
+                setToken(data.token);
+                showCategories();
+                // Ya no se llama automáticamente a fetchCategories()
+            } catch (err) {
+                alert("Error al iniciar sesión.");
+            }
+        }
+
+        function logout() {
+            clearToken();
+            showLogin();
+        }
+
+        // Login form
+        document.getElementById('loginForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            login(username, password);
+        });
+
+        // Category form
+        document.getElementById('categoryForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const name = document.getElementById('categoryName').value.trim();
+            if (name) {
+                createCategory(name);
+            }
+        });
+
+        // Load categories button
+        document.getElementById('loadCategoriesBtn').addEventListener('click', fetchCategories);
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        // Al cargar
+        if (getToken()) {
+            showCategories();
+            // fetchCategories(); // ya no se llama al inicio
+        } else {
+            showLogin();
+        }
+    </script>
+
+</body>
+
+</html>

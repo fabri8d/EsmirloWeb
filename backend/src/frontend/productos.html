@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login y Gestión de Productos</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; max-width: 600px; }
+    label { display: block; margin-top: 10px; }
+    input, select, button, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+    .variant { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+    .variant h4 { margin: 0 0 10px 0; }
+    .message { margin-top: 20px; font-weight: bold; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <h1>Login</h1>
+  <form id="login-form">
+    <label>Usuario:
+      <input type="text" id="login-username" required />
+    </label>
+    <label>Contraseña:
+      <input type="password" id="login-password" required />
+    </label>
+    <button type="submit">Iniciar Sesión</button>
+  </form>
+
+  <div class="message" id="login-message"></div>
+
+  <div id="main-content" class="hidden">
+    <h2>Crear Producto con Variantes (solo admin)</h2>
+
+    <form id="product-form">
+      <label>Nombre del Producto:
+        <input type="text" id="name" required />
+      </label>
+      <label>Descripción:
+        <textarea id="description" rows="3" required></textarea>
+      </label>
+      <label>Categoría:
+        <select id="category-select" required>
+          <option value="">Selecciona una categoría</option>
+        </select>
+      </label>
+      <label>Precio:
+        <input type="number" id="price" step="0.01" required />
+      </label>
+      <label>URL Imagen (opcional):
+        <input type="text" id="imageUrl" />
+      </label>
+      <h3>Variantes</h3>
+      <div id="variants-container"></div>
+      <button type="button" class="add-variant">Agregar Variante</button>
+      <button type="submit">Crear Producto</button>
+    </form>
+
+    <div class="message" id="create-message"></div>
+
+    <hr />
+    <h2>Comprar Variante</h2>
+
+    <form id="purchase-form">
+      <label>ID del Producto:
+        <input type="number" id="purchase-product-id" required />
+      </label>
+      <label>Tamaño Variante:
+        <input type="text" id="purchase-size" required />
+      </label>
+      <label>Color Variante:
+        <input type="text" id="purchase-color" required />
+      </label>
+      <label>Cantidad:
+        <input type="number" id="purchase-quantity" min="1" value="1" required />
+      </label>
+      <button type="submit">Comprar</button>
+    </form>
+
+    <div class="message" id="purchase-message"></div>
+  </div>
+
+  <script>
+    const variantsContainer = document.getElementById("variants-container");
+    const addVariantBtn = document.querySelector(".add-variant");
+    const createMessage = document.getElementById("create-message");
+    const purchaseMessage = document.getElementById("purchase-message");
+    const mainContent = document.getElementById("main-content");
+    const categorySelect = document.getElementById("category-select");
+
+    function createVariantInputs() {
+      const div = document.createElement("div");
+      div.classList.add("variant");
+      div.innerHTML = `
+        <h4>Variante</h4>
+        <label>Tamaño:
+          <input type="text" class="variant-size" required />
+        </label>
+        <label>Color:
+          <input type="text" class="variant-color" required />
+        </label>
+        <label>Stock:
+          <input type="number" class="variant-stock" min="0" value="0" required />
+        </label>
+        <button type="button" class="remove-variant">Eliminar Variante</button>
+      `;
+      div.querySelector(".remove-variant").addEventListener("click", () => {
+        variantsContainer.removeChild(div);
+      });
+      return div;
+    }
+
+    addVariantBtn.addEventListener("click", () => {
+      variantsContainer.appendChild(createVariantInputs());
+    });
+
+    variantsContainer.appendChild(createVariantInputs());
+
+    async function loadCategories(token) {
+      try {
+        const res = await fetch("http://localhost:3000/categories/getCategories", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        const categories = await res.json();
+        if (res.ok && Array.isArray(categories)) {
+          categorySelect.innerHTML = '<option value="">Selecciona una categoría</option>';
+          categories.forEach(cat => {
+            const option = document.createElement("option");
+            option.value = cat.id ;
+            option.textContent = cat.name + " " + cat.id;
+            categorySelect.appendChild(option);
+          });
+        } else {
+          console.error("Error al cargar categorías:", categories.error || res.statusText);
+        }
+      } catch (err) {
+        console.error("Error al cargar categorías:", err.message);
+      }
+    }
+
+    document.getElementById("login-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const username = document.getElementById("login-username").value.trim();
+      const password = document.getElementById("login-password").value.trim();
+      const loginMessage = document.getElementById("login-message");
+
+      try {
+        const res = await fetch("http://localhost:3000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          loginMessage.style.color = "red";
+          loginMessage.textContent = data.error || "Login fallido.";
+          return;
+        }
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.user.role);
+
+        loginMessage.style.color = "green";
+        loginMessage.textContent = `Bienvenido, ${data.user.firstName} (${data.user.role})`;
+
+        if (data.user.role === "admin") {
+          mainContent.classList.remove("hidden");
+          await loadCategories(data.token);
+        } else {
+          createMessage.textContent = "Solo los administradores pueden crear productos.";
+        }
+
+      } catch (err) {
+        loginMessage.style.color = "red";
+        loginMessage.textContent = "Error de conexión.";
+      }
+    });
+
+    document.getElementById("product-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      createMessage.textContent = "";
+
+      if (localStorage.getItem("role") !== "admin") {
+        createMessage.style.color = "red";
+        createMessage.textContent = "No tienes permisos para crear productos.";
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      const payload = {
+        name: document.getElementById("name").value.trim(),
+        description: document.getElementById("description").value.trim(),
+        category: categorySelect.value,
+        price: parseFloat(document.getElementById("price").value),
+        imageUrl: document.getElementById("imageUrl").value.trim() || null,
+        variants: [...variantsContainer.children].map(div => ({
+          size: div.querySelector(".variant-size").value.trim(),
+          color: div.querySelector(".variant-color").value.trim(),
+          stock: parseInt(div.querySelector(".variant-stock").value),
+        }))
+      };
+
+      try {
+        const res = await fetch("http://localhost:3000/products/createProduct", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          createMessage.style.color = "red";
+          createMessage.textContent = "Error: " + (data.error || res.statusText);
+          return;
+        }
+
+        createMessage.style.color = "green";
+        createMessage.textContent = `Producto creado: ID ${data.id} con ${data.variants.length} variantes.`;
+
+      } catch (err) {
+        createMessage.style.color = "red";
+        createMessage.textContent = "Error de conexión.";
+      }
+    });
+
+    document.getElementById("purchase-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      purchaseMessage.textContent = "";
+
+      const payload = {
+        productId: parseInt(document.getElementById("purchase-product-id").value),
+        variant: {
+          size: document.getElementById("purchase-size").value.trim(),
+          color: document.getElementById("purchase-color").value.trim(),
+        },
+        quantity: parseInt(document.getElementById("purchase-quantity").value)
+      };
+
+      try {
+        const res = await fetch("http://localhost:3000/products/purchase", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          purchaseMessage.style.color = "red";
+          purchaseMessage.textContent = "Error: " + (data.error || res.statusText);
+          return;
+        }
+
+        purchaseMessage.style.color = "green";
+        purchaseMessage.textContent = `Compra exitosa! Stock restante: ${data.variant.stockRestante}`;
+
+      } catch (err) {
+        purchaseMessage.style.color = "red";
+        purchaseMessage.textContent = "Error de conexión.";
+      }
+    });
+  </script>
+</body>
+</html>
