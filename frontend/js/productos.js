@@ -1,122 +1,221 @@
-// Mostrar u ocultar categorías
-function showCategory(categoryId) {
-    const categories = document.querySelectorAll('.category');
-    categories.forEach(cat => cat.style.display = 'none');
-
-    const selected = document.getElementById(categoryId);
-    if (selected) {
-        selected.style.display = 'block';
-    }
-}
-
-// Lógica para cargar productos desde backend
-async function cargarProductos() {
-    try {
-        const response = await fetch('/products/getProducts');
-        if (!response.ok) throw new Error('Error al cargar productos');
-
-        const productos = await response.json();
-
-        // Limpiar todas las tablas
-        ['camisetas', 'conjuntos', 'accesorios'].forEach(cat => {
-        const tbody = document.querySelector(`#${cat} tbody`); 
-            if (tbody) tbody.innerHTML = '';
-        });
-
-        // Agregar productos a la tabla según su categoría
-        productos.forEach(prod => {
-            const tbody = document.querySelector(`#${prod.categoria} tbody`); // ✅ Correcto
-            if (!tbody) return; // Ignorar si no existe la categoría
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-    <th>${prod.id_producto}</th>
-    <td>${prod.nombre}</td>
-    <td>${prod.precio}</td>
-    <td>${prod.cantidad}</td>
-    <td>
-        <button class="btn btn-warning btn-sm" onclick="editarProducto(${prod.id_producto})">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="eliminarProducto(${prod.id_producto})">Eliminar</button>
-    </td>
-`;
-
-            tbody.appendChild(tr);
-        });
-    } catch (error) {
-        console.error(error);
-    }
-}
+const createMessage = document.getElementById("create-message");
+const purchaseMessage = document.getElementById("purchase-message");
+const categorySelect = document.getElementById("productCategory");
+const categoryContainer = document.getElementById("category-container");
+const categoryNavbar = document.querySelector(".navbar-nav.flex-row");
+const token = localStorage.getItem("token");
+const role = localStorage.getItem("role");
 
 // Capturar formulario y agregar producto
 document.addEventListener('DOMContentLoaded', () => {
+    if (role !== "admin") {
+        console.log("Debes ser administrador.");
+        return;
+    }
     // Mostrar la categoría camisetas al cargar la página
-    showCategory('camisetas');
+    loadCategories();
+    // Mostrar la categoría para crear producto
+    loadCategoriesOnCreate()
+});
 
-    // Cargar productos desde backend
-    cargarProductos();
 
-    // Botón para agregar producto en el modal
-    const btnAgregar = document.querySelector('#addProductModal .btn-primary');
-    btnAgregar.addEventListener('click', async () => {
-        const nombre = document.getElementById('productName').value.trim();
-        const precio = parseFloat(document.getElementById('productPrice').value);
-        const cantidad = parseInt(document.getElementById('productStock').value);
-        const categoria = document.getElementById('productCategory').value;
-        
-        // Obtén descripción, que debes agregar en el modal (ver nota abajo)
-        const descripcionInput = document.getElementById('productDescription');
-        const descripcion = descripcionInput ? descripcionInput.value.trim() : '';
+//Crear producto
+document.getElementById("product-form").addEventListener("submit", async e => {
+    e.preventDefault();
 
-        if (!nombre || !descripcion || isNaN(precio) || isNaN(cantidad) || !categoria) {
-            alert('Por favor completa todos los campos correctamente.');
+    const payload = {
+        name: document.getElementById("productName").value.trim(),
+        description: document.getElementById("productDescription").value.trim(),
+        category: categorySelect.value,
+        price: parseFloat(document.getElementById("productPrice").value),
+        imageUrl: document.getElementById("productImage").value.trim() || null,
+        variants: null
+        // variants: [...variantsContainer.children].map(div => ({
+        //   size: div.querySelector(".variant-size").value.trim(),
+        //   color: div.querySelector(".variant-color").value.trim(),
+        //   stock: parseInt(div.querySelector(".variant-stock").value),
+        // }))
+    };
+    try {
+        const res = await fetch("http://localhost:3000/products/createProduct", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            console.log("Error: " + (data.error || res.statusText));
             return;
         }
 
-        // NO creamos ni enviamos id_producto, que lo hará el backend
+        console.log(`Producto creado: ID ${data.id}`);
 
-        const nuevoProducto = {
-            nombre,
-            descripcion,
-            precio,
-            cantidad,
-            categoria
-        };
+    } catch (err) {
+        console.log("Error de conexión.");
+    }
+})
 
-        try {
-            const response = await fetch('/products/createProduct', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(nuevoProducto)
-            });
 
-            if (!response.ok) throw new Error('Error al agregar producto');
 
-            // Cerrar modal
-            const modalEl = document.getElementById('addProductModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            modal.hide();
+// function createVariantInputs() {
+//       const div = document.createElement("div");
+//       div.classList.add("variant");
+//       div.innerHTML = `
+//         <h4>Variante</h4>
+//         <label>Tamaño:
+//           <input type="text" class="variant-size" required />
+//         </label>
+//         <label>Color:
+//           <input type="text" class="variant-color" required />
+//         </label>
+//         <label>Stock:
+//           <input type="number" class="variant-stock" min="0" value="0" required />
+//         </label>
+//         <button type="button" class="remove-variant">Eliminar Variante</button>
+//       `;
+//       div.querySelector(".remove-variant").addEventListener("click", () => {
+//         variantsContainer.removeChild(div);
+//       });
+//       return div;
+//     }
 
-            // Limpiar formulario
-            document.querySelector('#addProductModal form').reset();
+//     addVariantBtn.addEventListener("click", () => {
+//       variantsContainer.appendChild(createVariantInputs());
+//     });
 
-            // Recargar productos para actualizar tabla
-            cargarProductos();
+//     variantsContainer.appendChild(createVariantInputs());
 
-            // Mostrar la categoría del producto recién agregado
-            showCategory(categoria);
-
-        } catch (error) {
-            alert('Error al agregar el producto');
-            console.error(error);
-        }
-    });
-});
 
 // Funciones de editar y eliminar (solo placeholders, debes implementar backend)
-function editarProducto(id) {
-    alert('Función editar no implementada. Producto ID: ' + id);
+function editProduct(id) {
+    alert("Editar producto " + id);
+}
+function deleteProduct(id) {
+    if (confirm("¿Eliminar producto " + id + "?")) {
+        alert("Producto eliminado (simulado)");
+    }
 }
 
-function eliminarProducto(id) {
-    alert('Función eliminar no implementada. Producto ID: ' + id);
+async function loadCategoriesOnCreate() {
+
+    try {
+        const res = await fetch("http://localhost:3000/categories/getCategories", {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+        const categories = await res.json();
+        if (res.ok && Array.isArray(categories)) {
+            categorySelect.innerHTML = '<option value="">Selecciona una categoría</option>';
+            categories.forEach(cat => {
+                const option = document.createElement("option");
+                option.value = cat.id;
+                option.textContent = cat.name + " " + cat.id;
+                categorySelect.appendChild(option);
+            });
+        } else {
+            console.error("Error al cargar categorías:", categories.error || res.statusText);
+        }
+    } catch (err) {
+        console.error("Error al cargar categorías:", err.message);
+    }
+}
+
+async function loadCategories() {
+    try {
+        const res = await fetch("http://localhost:3000/categories/getCategories", {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+        const categories = await res.json();
+        // Limpiar navbar y select
+        categoryNavbar.innerHTML = "";
+        categorySelect.innerHTML = '<option value="">Selecciona una categoría</option>';
+
+        categories.forEach(cat => {
+            // Navbar
+            const li = document.createElement("li");
+            li.classList.add("nav-item", "me-3");
+            li.innerHTML = `<a class="nav-link" href="#" onclick="showProducts('${cat.id}','${cat.name}')">${cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}</a>`;
+            categoryNavbar.appendChild(li);
+
+            // Select
+            const option = document.createElement("option");
+            option.value = cat.name;
+            option.textContent = cat.name.charAt(0).toUpperCase() + cat.name.slice(1);
+            categorySelect.appendChild(option);
+        });
+    } catch (err) {
+        console.error("Error cargando categorías:", err);
+    }
+}
+
+async function showProducts(categoryId, categoryName) {
+    categoryContainer.innerHTML = "";
+    try {
+        const response = await fetch(`http://localhost:3000/products/getProductsByCategory/${categoryId}`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+        if (!response.ok) throw new Error("No se pudieron obtener los productos");
+        const products = await response.json();
+
+
+        const section = document.createElement("div");
+        section.classList.add("category");
+
+        const title = document.createElement("h3");
+        title.textContent = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
+        section.appendChild(title);
+
+        const table = document.createElement("table");
+        table.className = "table table-striped";
+        table.innerHTML = `
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Producto</th>
+          <th>Precio</th>
+          <th>Stock</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${products.map(p => `
+          <tr>
+            <td>${p.id}</td>
+            <td>${p.name}</td>
+            <td>$${p.price}</td>
+            <td>${p.variants?.reduce((sum, v) => sum + v.stock, 0) ?? 0}</td>
+            <td>
+              <button class="btn btn-warning btn-sm" onclick="editProduct(${p.id})">Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Eliminar</button>
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    `;
+
+        section.appendChild(table);
+
+        const addBtn = document.createElement("button");
+        addBtn.className = "btn btn-success";
+        addBtn.setAttribute("data-bs-toggle", "modal");
+        addBtn.setAttribute("data-bs-target", "#addProductModal");
+        addBtn.textContent = "Agregar Producto";
+        section.appendChild(addBtn);
+
+        categoryContainer.appendChild(section);
+    } catch (err) {
+        categoryContainer.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+    }
 }

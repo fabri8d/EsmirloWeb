@@ -33,125 +33,11 @@
         </div>
     </nav>
 
-    <!-- Barra de navegación secundaria para categorías -->
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h5">Categorías</span>
-            <ul class="navbar-nav flex-row">
-                <li class="nav-item me-3">
-                    <a class="nav-link active" href="#" onclick="showCategory('camisetas')">Camisetas</a>
-                </li>
-                <li class="nav-item me-3">
-                    <a class="nav-link" href="#" onclick="showCategory('conjuntos')">Conjuntos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="showCategory('accesorios')">Accesorios</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-
     <div class="container mt-4">
-        <!-- Categoría Camisetas -->
-        <div id="camisetas" class="category" style="display:none;">
-            <h3>Camisetas</h3>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Producto</th>
-                        <th>Precio</th>
-                        <th>Stock</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th>1</th>
-                        <td>Camiseta Titular 2025</td>
-                        <td>200</td>
-                        <td>125</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm">Editar</button>
-                            <button class="btn btn-danger btn-sm">Eliminar</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>2</th>
-                        <td>Camiseta de Entrenamiento 2025</td>
-                        <td>150</td>
-                        <td>80</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm">Editar</button>
-                            <button class="btn btn-danger btn-sm">Eliminar</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">Agregar
-                Producto</button>
-        </div>
-
-        <!-- Categoría Conjuntos -->
-        <div id="conjuntos" class="category" style="display:none;">
-            <h3>Conjuntos</h3>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Producto</th>
-                        <th>Precio</th>
-                        <th>Stock</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th>3</th>
-                        <td>Conjunto Deportivo 2025</td>
-                        <td>350</td>
-                        <td>60</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm">Editar</button>
-                            <button class="btn btn-danger btn-sm">Eliminar</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">Agregar
-                Producto</button>
-        </div>
-
-        <!-- Categoría Accesorios -->
-        <div id="accesorios" class="category" style="display:none;">
-            <h3>Accesorios</h3>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Producto</th>
-                        <th>Precio</th>
-                        <th>Stock</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th>5</th>
-                        <td>Gorra ESMIRLO FC</td>
-                        <td>50</td>
-                        <td>200</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm">Editar</button>
-                            <button class="btn btn-danger btn-sm">Eliminar</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">Agregar
-                Producto</button>
-        </div>
+        <div id="category-container"></div>
     </div>
+
+
 
     <!-- Modal para agregar producto -->
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
@@ -163,39 +49,42 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                   <form>
-  <div class="mb-3">
-      <label for="productName" class="form-label">Nombre del Producto</label>
-      <input type="text" class="form-control" id="productName" required>
-  </div>
-  <div class="mb-3">
-      <label for="productPrice" class="form-label">Precio</label>
-      <input type="number" class="form-control" id="productPrice" required>
-  </div>
-  <div class="mb-3">
-      <label for="productStock" class="form-label">Stock</label>
-      <input type="number" class="form-control" id="productStock" required>
-  </div>
-  <div class="mb-3">
-      <label for="productDescription" class="form-label">Descripción</label>
-      <textarea class="form-control" id="productDescription" rows="3" required></textarea>
-  </div>
-  <div class="mb-3">
-      <label for="productCategory" class="form-label">Categoría</label>
-      <select class="form-select" id="productCategory" required>
-          <option value="camisetas">Camisetas</option>
-          <option value="conjuntos">Conjuntos</option>
-          <option value="accesorios">Accesorios</option>
-      </select>
-  </div>
-</form>
+                    <form id="product-form">
+                        <div class="mb-3">
+                            <label for="productName" class="form-label">Nombre del Producto</label>
+                            <input type="text" class="form-control" id="productName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productPrice" class="form-label">Precio</label>
+                            <input type="number" class="form-control" id="productPrice" required>
+                        </div>
+                        <!-- <div class="mb-3">
+                            <label for="productStock" class="form-label">Stock</label>
+                            <input type="number" class="form-control" id="productStock" required>
+                        </div> -->
+                        <div class="mb-3">
+                            <label for="productDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="productDescription" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productImage" class="form-label">Imagen del Producto</label>
+                            <input type="text" class="form-control" id="productImage" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productCategory" class="form-label">Categoría</label>
+                            <select class="form-select" id="productCategory" required>
+                                <option value="">Selecciona una categoría</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="submit" class="btn btn-primary">Agregar Producto</button>
+                        </div>
+                    </form>
 
 
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-<button type="button" class="btn btn-primary">Agregar Producto</button>
-                </div>
+
             </div>
         </div>
     </div>
