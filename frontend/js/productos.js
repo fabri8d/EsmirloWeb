@@ -219,3 +219,48 @@ async function showProducts(categoryId, categoryName) {
         categoryContainer.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
     }
 }
+
+
+function crearVariante() {
+  const variantsContainer = document.getElementById('variants-container');
+  const addVariantBtn = document.querySelector('.add-variant');
+
+  if (!addVariantBtn || !variantsContainer) {
+    console.error("No se encontró el botón agregar variante o el contenedor de variantes");
+    return;
+  }
+
+  addVariantBtn.addEventListener('click', () => {
+    agregarVariante();
+  });
+
+  // Crear y agregar una variante al cargar la página (opcional)
+  agregarVariante();
+
+  function agregarVariante() {
+    const variantForm = document.createElement('div');
+    variantForm.classList.add('row', 'gx-2', 'mb-2');
+
+    variantForm.innerHTML = `
+      <div class="col-md-5">
+        <input type="text" class="form-control" name="color[]" placeholder="Color" required>
+      </div>
+      <div class="col-md-5">
+        <input type="text" class="form-control" name="talle[]" placeholder="Talle" required>
+      </div>
+      <div class="col-md-2 d-flex align-items-center">
+        <button type="button" class="btn btn-danger btn-sm remove-variant">X</button>
+      </div>
+    `;
+
+    variantsContainer.appendChild(variantForm);
+
+    variantForm.querySelector('.remove-variant').addEventListener('click', () => {
+      variantForm.remove();
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  crearVariante();
+});
