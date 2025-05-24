@@ -1,6 +1,9 @@
+const cloudinary = require("../cloudinary.js"); // ajusta el path según tu estructura
+const fs = require( 'fs/promises');
 const Product = require("../models/products/Product.js");
 const ProductVariant = require("../models/products/ProductVariant.js");
 const Category = require("../models/products/Category.js");
+
 async function createProductService(dataSource, productData) {
   const productRepo = dataSource.getRepository("Product");
   const variantRepo = dataSource.getRepository("ProductVariant");
@@ -10,21 +13,32 @@ async function createProductService(dataSource, productData) {
     throw new Error("Ya existe un producto con ese nombre.");
   }
 
+  // 📤 Subir imagen a Cloudinary
+  let imageUrl = null;
+  if (productData.image && productData.image.path) {
+    const result = await cloudinary.uploader.upload(productData.image.path, {
+      folder: "productos"
+    });
+    imageUrl = result.secure_url;
 
+    // Elimina el archivo temporal del servidor si estás usando multer
+    await fs.unlink(productData.image.path);
+  } else {
+    throw new Error("No se proporcionó imagen válida.");
+  }
 
-  // Crear el producto
+  // 🛠 Crear el producto
   const product = productRepo.create({
     name: productData.name,
     description: productData.description,
     category: productData.category,
     price: productData.price,
-    image: productData.imageUrl,
+    image: imageUrl,
   });
 
   await productRepo.save(product);
-  
-  console.log(productData.variants)
-  // Verificar duplicados de variantes (ya tenemos el producto guardado)
+
+  // ✅ Verificar duplicados de variantes
   for (const variant of productData.variants) {
     const duplicateVariant = await variantRepo.findOne({
       where: {
@@ -40,8 +54,7 @@ async function createProductService(dataSource, productData) {
     }
   }
 
-
-  // Crear y guardar variantes
+  // 🛠 Crear variantes
   const variants = productData.variants.map(variant =>
     variantRepo.create({
       size: variant.size,
@@ -53,9 +66,6 @@ async function createProductService(dataSource, productData) {
 
   await variantRepo.save(variants);
 
-  // Limpiar referencias circulares
-  const cleanVariants = variants.map(({ product, ...rest }) => rest);
-
   return {
     id: product.id,
     name: product.name,
@@ -66,8 +76,6 @@ async function createProductService(dataSource, productData) {
     variants: null,
   };
 }
-
-
 
 /**
  * Realizar compra de una variante (actualiza stock)

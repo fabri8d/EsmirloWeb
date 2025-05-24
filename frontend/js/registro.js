@@ -15,17 +15,17 @@ form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const payload = {
-        userName: document.getElementById("productName").value.trim(),
-        firstName: document.getElementById("productDescription").value.trim(),
-        lastName: categorySelect.value,
-        email: parseFloat(document.getElementById("productPrice").value),
-        password: document.getElementById("inputPassword").value.trim(),
+        username: document.getElementById("inputUserName").value.trim(),
+        firstName: document.getElementById("inputName").value.trim(),
+        lastName: document.getElementById("inputLastName").value.trim(),
+        email: document.getElementById("inputEmail4").value.trim(),
+        password: document.getElementById("inputPassword4").value.trim(),
     };
     try {
         const res = await fetch("http://localhost:3000/api/auth/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
+            body: JSON.stringify(payload),
         });
 
         const text = await res.text();
@@ -43,6 +43,6 @@ form.addEventListener("submit", async (event) => {
 
         responseBox.textContent = JSON.stringify(json, null, 2);
     } catch (error) {
-        responseBox.textContent = "Error en la petición: " + error.message;
+        responseBox.textContent = "Error en la petición: " + error;
     }
 });

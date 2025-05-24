@@ -1,3 +1,4 @@
+const { upload } = require("../middlewares/multerMiddleware");
 const express = require("express");
 const router = express.Router();
 const { createProduct, purchaseVariant, changePriceProduct, getProducts,getVariantsByProduct, getProductsByCategory,getProductsByName,getProductByID } = require("../controllers/productController");
@@ -5,7 +6,17 @@ const { createProduct, purchaseVariant, changePriceProduct, getProducts,getVaria
 // Importamos los middlewares
 const { authenticateToken, authorizeAdmin, } = require("../middlewares/authMiddleware");
 //Admins
-router.post("/createProduct", authenticateToken, authorizeAdmin, createProduct);
+
+
+router.post(
+  "/createProduct",
+  authenticateToken,
+  authorizeAdmin,
+  upload.single("image"), // debe coincidir con el name del input
+  createProduct
+);
+
+
 router.post("/changePrice", authenticateToken, authorizeAdmin, changePriceProduct);
 //Cualquier usuario
 router.post("/purchase", authenticateToken, purchaseVariant);

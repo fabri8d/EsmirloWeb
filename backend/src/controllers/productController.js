@@ -3,13 +3,29 @@ const { createProductService, purchaseVariantService, changePriceProductService,
 async function createProduct(req, res) {
   try {
     const dataSource = req.app.get("dataSource");
-    const result = await createProductService(dataSource, req.body);
+
+    let variantsParsed = [];
+    if (typeof req.body.variants === "string") {
+      variantsParsed = JSON.parse(req.body.variants);
+    } else if (Array.isArray(req.body.variants)) {
+      variantsParsed = req.body.variants;
+    }
+
+    const productData = {
+      ...req.body,
+      variants: variantsParsed,
+      image: req.file
+    };
+
+    const result = await createProductService(dataSource, productData);
     res.status(201).json(result);
   } catch (err) {
     console.error("Error al crear producto:", err);
     res.status(500).json({ error: err.message });
   }
-};
+}
+
+
 
 async function purchaseVariant(req, res) {
   try {

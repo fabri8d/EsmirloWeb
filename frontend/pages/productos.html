@@ -21,7 +21,7 @@
   </nav>
 
   <div class="container my-4">
-    <form id="product-form" class="border p-4 rounded bg-light">
+    <form id="product-form" class="border p-4 rounded bg-light" enctype="multipart/form-data">
       <h2 class="mb-4">Crear Producto</h2>
 
       <div class="mb-3">
@@ -47,15 +47,17 @@
       </div>
 
       <div class="mb-3">
-        <label for="imageUrl" class="form-label">URL Imagen (opcional)</label>
-        <input type="text" class="form-control" id="imageUrl" />
+        <label for="imageFile" class="form-label">Imagen del producto (.jpg, .png)</label>
+        <input type="file" class="form-control" id="imageFile" name="image" accept="image/*" />
+
       </div>
 
       <h4 class="mt-4">Variantes</h4>
       <div id="variants-container" class="mb-3"></div>
 
       <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-primary add-variant" onclick="agregarVariante()">Agregar Variante</button>
+        <button type="button" class="btn btn-outline-primary add-variant" onclick="agregarVariante()">Agregar
+          Variante</button>
         <button type="submit" class="btn btn-success">Crear Producto</button>
       </div>
     </form>

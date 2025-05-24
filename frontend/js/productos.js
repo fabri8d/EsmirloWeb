@@ -19,27 +19,36 @@ document.addEventListener('DOMContentLoaded', () => {
 document.getElementById("product-form").addEventListener("submit", async e => {
   e.preventDefault();
 
-  const payload = {
-    name: document.getElementById("name").value.trim(),
-    description: document.getElementById("description").value.trim(),
-    category: categorySelect.value,
-    price: parseFloat(document.getElementById("price").value),
-    imageUrl: document.getElementById("imageUrl").value.trim() || null,
-    variants: [...variantsContainer.children].map(div => ({
-      color: div.querySelector(".variant-color").value.trim(),
-      size: div.querySelector(".variant-size").value.trim(),
-      stock: parseInt(div.querySelector(".variant-stock").value),
-    }))
-  };
+  const formData = new FormData();
+
+  formData.append("name", document.getElementById("name").value.trim());
+  formData.append("description", document.getElementById("description").value.trim());
+  formData.append("category", categorySelect.value);
+  formData.append("price", parseFloat(document.getElementById("price").value));
+
+  // Imagen del input file
+  const imageFileInput = document.getElementById("imageFile");
+  if (imageFileInput.files.length > 0) {
+    formData.append("image", imageFileInput.files[0]);  // Cambiado aquí a "image"
+  }
+
+  // Variantes en JSON dentro de FormData (stringify)
+  const variants = [...variantsContainer.children].map(div => ({
+    color: div.querySelector(".variant-color").value.trim(),
+    size: div.querySelector(".variant-size").value.trim(),
+    stock: parseInt(div.querySelector(".variant-stock").value),
+  }));
+
+  formData.append("variants", JSON.stringify(variants));
 
   try {
     const res = await fetch("http://localhost:3000/products/createProduct", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
+        // NO ponemos Content-Type aquí, fetch lo maneja para multipart/form-data
       },
-      body: JSON.stringify(payload),
+      body: formData,
     });
 
     const data = await res.json();
@@ -49,8 +58,10 @@ document.getElementById("product-form").addEventListener("submit", async e => {
     }
 
     console.log(`Producto creado: ID ${data.id}`);
+    createMessage.textContent = "Producto creado exitosamente.";
+    createMessage.classList.remove("d-none");
   } catch (err) {
-    console.log("Error de conexión.");
+    console.log("Error de conexión.", err);
   }
 });
 
@@ -104,7 +115,6 @@ function agregarVariante() {
 
   variantsContainer.appendChild(variantForm);
 }
-
 
 
 // const createMessage = document.getElementById("create-message");

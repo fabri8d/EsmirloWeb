@@ -2,23 +2,22 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const SECRET_KEY = process.env.SECRET_KEY || "clave_secreta";
 
-async function registerUser(dataSource, { username, password, firstName, lastName, email, role }) {
+async function registerUser(dataSource, userData) {
   const UserRepository = dataSource.getRepository("User");
-
-  const existingUser = await UserRepository.findOne({ where: { username } });
+  const existingUser = await UserRepository.findOne({ where: { username: userData.username } });
   if (existingUser) {
     throw new Error("El usuario ya existe");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(userData.password, 10);
 
   const newUser = UserRepository.create({
-    username,
+    username: userData.username,
     password: hashedPassword,
-    firstName,
-    lastName,
-    email,
-    role,
+    firstName: userData.firstName,
+    lastName: userData.lastName,
+    email: userData.email,
+    role: "customer",
   });
 
   await UserRepository.save(newUser);
