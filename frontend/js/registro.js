@@ -14,9 +14,13 @@ const responseBox = document.getElementById("response");
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-
+    const payload = {
+        userName: document.getElementById("productName").value.trim(),
+        firstName: document.getElementById("productDescription").value.trim(),
+        lastName: categorySelect.value,
+        email: parseFloat(document.getElementById("productPrice").value),
+        password: document.getElementById("inputPassword").value.trim(),
+    };
     try {
         const res = await fetch("http://localhost:3000/api/auth/register", {
             method: "POST",

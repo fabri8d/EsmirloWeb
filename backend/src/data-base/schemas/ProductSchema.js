@@ -18,7 +18,6 @@ module.exports = new EntitySchema({
       target: "ProductVariant",
       cascade: true,
       inverseSide: "product",
-      nullable: true,
     },
     category: {
       type: "many-to-one",

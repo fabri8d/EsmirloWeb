@@ -22,37 +22,39 @@ async function createProductService(dataSource, productData) {
   });
 
   await productRepo.save(product);
+  
+  console.log(productData.variants)
+  // Verificar duplicados de variantes (ya tenemos el producto guardado)
+  for (const variant of productData.variants) {
+    const duplicateVariant = await variantRepo.findOne({
+      where: {
+        product: { id: product.id },
+        size: variant.size,
+        color: variant.color,
+      },
+      relations: ["product"],
+    });
 
-  // // Verificar duplicados de variantes (ya tenemos el producto guardado)
-  // for (const variant of productData.variants) {
-  //   const duplicateVariant = await variantRepo.findOne({
-  //     where: {
-  //       product: { id: product.id },
-  //       size: variant.size,
-  //       color: variant.color,
-  //     },
-  //     relations: ["product"],
-  //   });
+    if (duplicateVariant) {
+      throw new Error(`Ya existe una variante con tamaño "${variant.size}" y color "${variant.color}".`);
+    }
+  }
 
-  //   if (duplicateVariant) {
-  //     throw new Error(`Ya existe una variante con tamaño "${variant.size}" y color "${variant.color}".`);
-  //   }
-  // }
 
   // Crear y guardar variantes
-  // const variants = productData.variants.map(variant =>
-  //   variantRepo.create({
-  //     size: variant.size,
-  //     color: variant.color,
-  //     stock: variant.stock,
-  //     product: product,
-  //   })
-  // );
+  const variants = productData.variants.map(variant =>
+    variantRepo.create({
+      size: variant.size,
+      color: variant.color,
+      stock: variant.stock,
+      product: product,
+    })
+  );
 
-  // // await variantRepo.save(variants);
+  await variantRepo.save(variants);
 
-  // // Limpiar referencias circulares
-  // const cleanVariants = variants.map(({ product, ...rest }) => rest);
+  // Limpiar referencias circulares
+  const cleanVariants = variants.map(({ product, ...rest }) => rest);
 
   return {
     id: product.id,
@@ -166,9 +168,9 @@ async function getProductsByCategoryService(dataSource, categoryId) {
 async function getVariantsByProductService(dataSource, productId) {
   const variantRepo = dataSource.getRepository(ProductVariant);
   const variants = await variantRepo.find({
-    where: { product:  {id: productId}},
+    where: { product: { id: productId } },
   });
-  if(!variants)throw new Error("No existen variantes del producto " + productData.name);
+  if (!variants) throw new Error("No existen variantes del producto " + productData.name);
   return await variants
 }
 
