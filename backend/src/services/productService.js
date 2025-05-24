@@ -14,11 +14,12 @@ async function createProductService(dataSource, productData) {
   }
 
   // 📤 Subir imagen a Cloudinary
-  let imageUrl = null;
+  let imageUrl;
   if (productData.image && productData.image.path) {
     const result = await cloudinary.uploader.upload(productData.image.path, {
       folder: "productos"
     });
+    console.log(result.secure_url)
     imageUrl = result.secure_url;
 
     // Elimina el archivo temporal del servidor si estás usando multer
@@ -26,14 +27,14 @@ async function createProductService(dataSource, productData) {
   } else {
     throw new Error("No se proporcionó imagen válida.");
   }
-
+  console.log(imageUrl)
   // 🛠 Crear el producto
   const product = productRepo.create({
     name: productData.name,
     description: productData.description,
     category: productData.category,
     price: productData.price,
-    image: imageUrl,
+    imageUrl: imageUrl,
   });
 
   await productRepo.save(product);

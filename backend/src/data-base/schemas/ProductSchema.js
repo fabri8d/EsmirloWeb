@@ -10,7 +10,7 @@ module.exports = new EntitySchema({
     name: { type: "varchar" },
     description: { type: "text" },
     price: { type: "decimal" },
-    imageUrl: { type: "varchar", nullable: true },
+    imageUrl: { type: "varchar"},
   },
   relations: {
     variants: {

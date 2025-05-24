@@ -1,5 +1,5 @@
 class Product {
-  constructor(name, description, category = null, price, imageUrl = null) {
+  constructor(name, description, category, price, imageUrl) {
     this.name = name;
     this.description = description;
     this.category = category;
