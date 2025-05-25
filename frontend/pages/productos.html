@@ -36,10 +36,17 @@
 
       <div class="mb-3">
         <label for="category-select" class="form-label">Categoría</label>
-        <select class="form-select" id="category-select" required>
-          <option value="">Selecciona una categoría</option>
-        </select>
+        <div class="d-flex gap-2">
+          <select class="form-select" id="category-select" required>
+            <option value="">Selecciona una categoría</option>
+          </select>
+          <input type="text" class="form-control" id="new-category" placeholder="Crear nueva categoría" />
+          <button type="button" class="btn btn-outline-primary" id="createCategory">Crear</button>
+        </div>
+        <div id="create-message" class="text-success d-none mt-2"></div>
       </div>
+
+
 
       <div class="mb-3">
         <label for="price" class="form-label">Precio</label>
@@ -49,7 +56,6 @@
       <div class="mb-3">
         <label for="imageFile" class="form-label">Imagen del producto (.jpg, .png)</label>
         <input type="file" class="form-control" id="imageFile" name="image" accept="image/*" />
-
       </div>
 
       <h4 class="mt-4">Variantes</h4>

@@ -1,0 +1,274 @@
+// const createMessage = document.getElementById("create-message");
+// const purchaseMessage = document.getElementById("purchase-message");
+// const categorySelect = document.getElementById("category-select");
+// // const categoryContainer = document.getElementById("category-container");
+// const categoryNavbar = document.querySelector(".navbar-nav.flex-row");
+// const variantsContainer = document.getElementById("variants-container");
+
+// const token = localStorage.getItem("token");
+// const role = localStorage.getItem("role");
+
+// // Capturar formulario y agregar producto
+// document.addEventListener('DOMContentLoaded', () => {
+//   if (role !== "admin") {
+//     console.log("Debes ser administrador.");
+//     return;
+//   }
+//   // Mostrar la categoría camisetas al cargar la página
+//   // loadCategories();
+//   // Mostrar la categoría para crear producto
+//   loadCategoriesOnCreate()
+// });
+
+
+// //Crear producto
+// document.getElementById("product-form").addEventListener("submit", async e => {
+//   e.preventDefault();
+//   console.log("entra el from")
+//   const payload = {
+//     name: document.getElementById("name").value.trim(),
+//     description: document.getElementById("description").value.trim(),
+//     category: categorySelect.value,
+//     price: parseFloat(document.getElementById("price").value),
+//     imageUrl: document.getElementById("imageUrl").value.trim() || null,
+//     variants: [...variantsContainer.children].map(div => ({
+//       color: div.querySelector(".variant-color").value.trim(),
+//       size: div.querySelector(".variant-size").value.trim(),
+//       stock: parseInt(div.querySelector(".variant-stock").value),
+//     }))
+
+//   };
+
+//   try {
+//     const res = await fetch("http://localhost:3000/products/createProduct", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         "Authorization": `Bearer ${token}`
+//       },
+//       body: JSON.stringify(payload),
+//     });
+
+//     const data = await res.json();
+
+//     if (!res.ok) {
+//       console.log("Error: " + (data.error || res.statusText));
+//       return;
+//     }
+
+//     console.log(`Producto creado: ID ${data.id}`);
+
+//   } catch (err) {
+//     console.log("Error de conexión.");
+//   }
+// })
+
+
+
+// // function createVariantInputs() {
+// //       const div = document.createElement("div");
+// //       div.classList.add("variant");
+// //       div.innerHTML = `
+// //         <h4>Variante</h4>
+// //         <label>Tamaño:
+// //           <input type="text" class="variant-size" required />
+// //         </label>
+// //         <label>Color:
+// //           <input type="text" class="variant-color" required />
+// //         </label>
+// //         <label>Stock:
+// //           <input type="number" class="variant-stock" min="0" value="0" required />
+// //         </label>
+// //         <button type="button" class="remove-variant">Eliminar Variante</button>
+// //       `;
+// //       div.querySelector(".remove-variant").addEventListener("click", () => {
+// //         variantsContainer.removeChild(div);
+// //       });
+// //       return div;
+// //     }
+
+// //     addVariantBtn.addEventListener("click", () => {
+// //       variantsContainer.appendChild(createVariantInputs());
+// //     });
+
+// //     variantsContainer.appendChild(createVariantInputs());
+
+
+// // Funciones de editar y eliminar (solo placeholders, debes implementar backend)
+// function editProduct(id) {
+//   alert("Editar producto " + id);
+// }
+// function deleteProduct(id) {
+//   if (confirm("¿Eliminar producto " + id + "?")) {
+//     alert("Producto eliminado (simulado)");
+//   }
+// }
+
+// async function loadCategoriesOnCreate() {
+
+//   try {
+//     const res = await fetch("http://localhost:3000/categories/getCategories", {
+//       headers: {
+//         "Authorization": `Bearer ${token}`
+//       }
+//     });
+//     const categories = await res.json();
+//     if (res.ok && Array.isArray(categories)) {
+//       categorySelect.innerHTML = '<option value="">Selecciona una categoría</option>';
+//       categories.forEach(cat => {
+//         const option = document.createElement("option");
+//         option.value = cat.id;
+//         option.textContent = cat.name + " " + cat.id;
+//         categorySelect.appendChild(option);
+//       });
+//     } else {
+//       console.error("Error al cargar categorías:", categories.error || res.statusText);
+//     }
+//   } catch (err) {
+//     console.error("Error al cargar categorías:", err.message);
+//   }
+// }
+
+// async function loadCategories() {
+//   try {
+//     const res = await fetch("http://localhost:3000/categories/getCategories", {
+//       headers: {
+//         "Authorization": `Bearer ${token}`
+//       }
+//     });
+//     const categories = await res.json();
+//     // Limpiar navbar y select
+//     categoryNavbar.innerHTML = "";
+//     categorySelect.innerHTML = '<option value="">Selecciona una categoría</option>';
+
+//     categories.forEach(cat => {
+//       // Navbar
+//       const li = document.createElement("li");
+//       li.classList.add("nav-item", "me-3");
+//       li.innerHTML = `<a class="nav-link" href="#" onclick="showProducts('${cat.id}','${cat.name}')">${cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}</a>`;
+//       categoryNavbar.appendChild(li);
+
+//       // Select
+//       const option = document.createElement("option");
+//       option.value = cat.name;
+//       option.textContent = cat.name.charAt(0).toUpperCase() + cat.name.slice(1);
+//       categorySelect.appendChild(option);
+//     });
+//   } catch (err) {
+//     console.error("Error cargando categorías:", err);
+//   }
+// }
+
+// async function showProducts(categoryId, categoryName) {
+//   categoryContainer.innerHTML = "";
+//   try {
+//     const response = await fetch(`http://localhost:3000/products/getProductsByCategory/${categoryId}`, {
+//       method: "GET",
+//       headers: {
+//         "Authorization": `Bearer ${token}`,
+//         "Content-Type": "application/json"
+//       }
+//     });
+//     if (!response.ok) throw new Error("No se pudieron obtener los productos");
+//     const products = await response.json();
+
+
+//     const section = document.createElement("div");
+//     section.classList.add("category");
+
+//     const title = document.createElement("h3");
+//     title.textContent = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
+//     section.appendChild(title);
+
+//     const table = document.createElement("table");
+//     table.className = "table table-striped";
+//     table.innerHTML = `
+//       <thead>
+//         <tr>
+//           <th>ID</th>
+//           <th>Producto</th>
+//           <th>Precio</th>
+//           <th>Stock</th>
+//           <th>Acciones</th>
+//         </tr>
+//       </thead>
+//       <tbody>
+//         ${products.map(p => `
+//           <tr>
+//             <td>${p.id}</td>
+//             <td>${p.name}</td>
+//             <td>$${p.price}</td>
+//             <td>${p.variants?.reduce((sum, v) => sum + v.stock, 0) ?? 0}</td>
+//             <td>
+//               <button class="btn btn-warning btn-sm" onclick="editProduct(${p.id})">Editar</button>
+//               <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Eliminar</button>
+//             </td>
+//           </tr>
+//         `).join("")}
+//       </tbody>
+//     `;
+
+//     section.appendChild(table);
+
+//     const addBtn = document.createElement("button");
+//     addBtn.className = "btn btn-success";
+//     addBtn.setAttribute("data-bs-toggle", "modal");
+//     addBtn.setAttribute("data-bs-target", "#addProductModal");
+//     addBtn.textContent = "Agregar Producto";
+//     section.appendChild(addBtn);
+
+//     categoryContainer.appendChild(section);
+//   } catch (err) {
+//     categoryContainer.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+//   }
+// }
+
+
+// function crearVariante() {
+//   const variantsContainer = document.getElementById('variants-container');
+//   const addVariantBtn = document.querySelector('.add-variant');
+
+//   if (!addVariantBtn || !variantsContainer) {
+//     console.error("No se encontró el botón agregar variante o el contenedor de variantes");
+//     return;
+//   }
+
+//   addVariantBtn.addEventListener('click', () => {
+//     agregarVariante();
+//   });
+
+//   // Crear y agregar una variante al cargar la página (opcional)
+//   agregarVariante();
+
+//   function agregarVariante() {
+//     const variantForm = document.createElement('div');
+//     variantForm.classList.add('row', 'gx-2', 'mb-2');
+
+//     variantForm.innerHTML = `
+//     <div class="col-md-4">
+//       <input type="text" class="form-control variant-color" placeholder="Color" required>
+//     </div>
+//     <div class="col-md-4">
+//       <input type="text" class="form-control variant-size" placeholder="Talle" required>
+//     </div>
+//     <div class="col-md-3">
+//       <input type="number" class="form-control variant-stock" placeholder="Stock" min="0" value="0" required>
+//     </div>
+//     <div class="col-md-1 d-flex align-items-center">
+//       <button type="button" class="btn btn-danger btn-sm remove-variant">X</button>
+//     </div>
+//   `;
+
+//     variantsContainer.appendChild(variantForm);
+
+//     variantForm.querySelector('.remove-variant').addEventListener('click', () => {
+//       variantForm.remove();
+//     });
+//   }
+
+
+// }
+
+// document.addEventListener('DOMContentLoaded', () => {
+//   crearVariante();
+// });

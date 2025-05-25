@@ -160,15 +160,24 @@ async function getProductsByNameService(dataSource, productName) {
   return products;
 }
 
-async function getProductsByCategoryService(dataSource, categoryId) {
+async function getProductsByCategoryService(dataSource, categoryName) {
   const productRepo = dataSource.getRepository(Product);
+  const categoryRepo = dataSource.getRepository(Category);
+  const category = await categoryRepo.findOne({
+    where: {
+      name: categoryName 
+    },
+  });
+  if (!category) {
+    throw new Error("No existe la categoria" + categoryName);
+  }
   const products = await productRepo.find({
     where: {
-      category: { id: categoryId }
+      category: { id: category.id }
     },
   });
   if (!products || products.length === 0) {
-    throw new Error("No existen productos en la categoría con ID " + categoryId);
+    throw new Error("No existen productos en la categoría " + category.name);
   }
   return products;
 }
