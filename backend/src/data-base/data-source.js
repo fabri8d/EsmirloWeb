@@ -3,7 +3,8 @@ const ProductSchema = require("./schemas/ProductSchema.js");
 const ProductVariantSchema = require("./schemas/ProductVariantSchema.js");
 const UserSchema = require("./schemas/UserSchema.js");
 const CategorySchema = require("./schemas/CategorySchema.js");
-
+const CartSchema = require("./schemas/CartSchema.js");
+const CartItemSchema = require("./schemas/CartItemSchema.js");
 const AppDataSource = new DataSource({
   type: "postgres",
   host: "localhost",
@@ -13,7 +14,7 @@ const AppDataSource = new DataSource({
   database: "bd-web",          // Ajusta según tu config
   synchronize: true,
   logging: false,
-  entities: [ProductSchema, ProductVariantSchema, UserSchema, CategorySchema],
+  entities: [ProductSchema, ProductVariantSchema, UserSchema, CategorySchema, CartItemSchema, CartSchema],
 });
 
 module.exports = { AppDataSource };
