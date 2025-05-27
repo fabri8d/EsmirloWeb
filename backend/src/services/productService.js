@@ -27,7 +27,6 @@ async function createProductService(dataSource, productData) {
   } else {
     throw new Error("No se proporcionó imagen válida.");
   }
-  console.log(imageUrl)
   // 🛠 Crear el producto
   const product = productRepo.create({
     name: productData.name,
