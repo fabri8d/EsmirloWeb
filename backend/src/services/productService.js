@@ -137,7 +137,9 @@ async function changePriceProductService(dataSource, { productData, newPrice }) 
 
 async function getProductsService(dataSource) {
   const productRepo = dataSource.getRepository(Product);
-  return await productRepo.find()
+  return await productRepo.find({
+    relations: ["variants"]
+  });
 }
 
 async function getProductByIDService(dataSource, productId) {

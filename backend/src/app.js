@@ -12,4 +12,6 @@ app.use(express.json());
 app.use("/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/categories", categoryRoutes)
+app.use("/cart", require("./routes/cartRoutes.js"));
+
 module.exports = app;
