@@ -12,6 +12,12 @@ app.use(express.json());
 
 app.use("/products", productRoutes);
 app.use("/api/auth", authRoutes);
+<<<<<<< HEAD
 app.use("/categories", categoryRoutes);
 app.use("/orders", orderRoutes);
+=======
+app.use("/categories", categoryRoutes)
+app.use("/cart", require("./routes/cartRoutes.js"));
+
+>>>>>>> ff2e2ee564be84be6a67ecf75ce47eed6825006b
 module.exports = app;
