@@ -150,6 +150,26 @@ async function removeCartItemService(dataSource, userId, cartItemId) {
 
   return { message: "Item removed from cart." };
 }
+async function updateCartStatusService(dataSource, cartId, newStatus) {
+  const cartRepo = dataSource.getRepository("Cart");
+
+  // Find the cart by ID
+  const cart = await cartRepo.findOne({
+    where: { id: cartId },
+    relations: ["items"]
+  });
+
+  if (!cart) {
+    throw new Error("Cart not found.");
+  }
+
+  // Update the status
+  cart.status = newStatus;
+
+  // Save the updated cart
+  return await cartRepo.save(cart);
+  
+}
 
 async function clearCartService(dataSource, userId) {
   const cartRepo = dataSource.getRepository("Cart");
@@ -174,5 +194,6 @@ module.exports = {
   getCartService,
   updateCartItemService,
   removeCartItemService,
-  clearCartService
+  clearCartService,
+  updateCartStatusService
 };

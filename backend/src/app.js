@@ -4,6 +4,7 @@ const productRoutes = require("./routes/productRoutes.js");
 const authRoutes = require("./routes/authRoutes.js");
 const categoryRoutes = require("./routes/categoryRoutes.js");
 const orderRoutes = require("./routes/orderRoutes.js");
+const cartRoutes = require("./routes/cartRoutes.js");
 require('dotenv').config();
 
 const app = express();
@@ -12,12 +13,8 @@ app.use(express.json());
 
 app.use("/products", productRoutes);
 app.use("/api/auth", authRoutes);
-<<<<<<< HEAD
 app.use("/categories", categoryRoutes);
 app.use("/orders", orderRoutes);
-=======
-app.use("/categories", categoryRoutes)
-app.use("/cart", require("./routes/cartRoutes.js"));
+app.use("/cart", cartRoutes);
 
->>>>>>> ff2e2ee564be84be6a67ecf75ce47eed6825006b
 module.exports = app;

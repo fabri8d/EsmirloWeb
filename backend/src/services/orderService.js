@@ -6,7 +6,7 @@ const Order = require("../models/orders/Order.js");
 const Cart = require("../models/orders/Cart.js");
 const CartItem = require("../models/orders/CartItem.js");
 
-async function createOrderService(dataSource, cartData) {
+async function createOrderService(dataSource, orderData) {
   const cartRepo = dataSource.getRepository(Cart);
   const cartItemRepo = dataSource.getRepository(CartItem);
   const orderRepo = dataSource.getRepository(Order);
@@ -38,7 +38,10 @@ async function createOrderService(dataSource, cartData) {
     user: user,
     status: "pending",
     totalAmount,
-    deliveryMethod: "store_pickup", // por defecto
+    aaddress: orderData.address ?? null,
+    postalCode: orderData.postalCode ?? null,
+    province: orderData.province ?? null,
+    deliveryMethod: orderData.deliveryMethod || "store_pickup",
     username: user.username,
     userFirstName: user.firstName,
     userLastName: user.lastName,
@@ -79,7 +82,7 @@ async function createOrderService(dataSource, cartData) {
 
 async function getOrderByIdService(dataSource, orderId) {
   const orderRepo = dataSource.getRepository(Order);
-  
+
   // Buscar la orden por ID con sus items
   const order = await orderRepo.findOne({
     where: { id: orderId },
@@ -95,7 +98,7 @@ async function getOrderByIdService(dataSource, orderId) {
 
 async function getOrdersByUserIdService(dataSource, userId) {
   const orderRepo = dataSource.getRepository(Order);
-  
+
   // Buscar las órdenes del usuario con sus items
   const orders = await orderRepo.find({
     where: { user: { id: userId } },
@@ -111,7 +114,7 @@ async function getOrdersByUserIdService(dataSource, userId) {
 
 async function cancelOrderService(dataSource, orderId) {
   const orderRepo = dataSource.getRepository(Order);
-  
+
   // Buscar la orden por ID
   const order = await orderRepo.findOne({
     where: { id: orderId },
@@ -124,7 +127,7 @@ async function cancelOrderService(dataSource, orderId) {
 
   // Cambiar el estado de la orden a "cancelled"
   order.status = "cancelled";
-  
+
   // Guardar los cambios
   await orderRepo.save(order);
 
@@ -136,7 +139,7 @@ async function cancelOrderService(dataSource, orderId) {
 
 async function updateOrderStatusService(dataSource, orderId, newStatus) {
   const orderRepo = dataSource.getRepository(Order);
-  
+
   // Buscar la orden por ID
   const order = await orderRepo.findOne({
     where: { id: orderId },
@@ -155,7 +158,7 @@ async function updateOrderStatusService(dataSource, orderId, newStatus) {
 
   // Actualizar el estado de la orden
   order.status = newStatus;
-  
+
   // Guardar los cambios
   await orderRepo.save(order);
 
@@ -168,7 +171,7 @@ async function updateOrderStatusService(dataSource, orderId, newStatus) {
 
 async function getAllOrdersService(dataSource) {
   const orderRepo = dataSource.getRepository(Order);
-  
+
   // Obtener todas las órdenes con sus items
   const orders = await orderRepo.find({
     relations: ["items", "user"]

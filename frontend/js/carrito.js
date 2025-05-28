@@ -2,6 +2,7 @@ const token = localStorage.getItem("token");
 
 document.addEventListener('DOMContentLoaded', () => {
   cargarCarrito();
+  configurarMetodoEnvio();
 });
 
 async function cargarCarrito() {
@@ -15,14 +16,18 @@ async function cargarCarrito() {
 
     const cartItemsDiv = document.getElementById('cart-items');
     const totalSpan = document.getElementById('cart-total');
+    const cartCount = document.getElementById('cart-count');
     cartItemsDiv.innerHTML = '';
     let total = 0;
+
+    cartCount.textContent = items.length;
 
     if (items.length === 0) {
       document.getElementById('carrito-compra').classList.add('d-none');
       document.getElementById('resumen-compra').classList.remove('d-none');
       cartItemsDiv.innerHTML = '<p class="text-center">Tu carrito está vacío.</p>';
       totalSpan.textContent = "0.00";
+      actualizarCostoEnvioYTotal(0);
       return;
     }
 
@@ -39,7 +44,6 @@ async function cargarCarrito() {
               <p class="mb-1">Precio: $${precio.toFixed(2)}</p>
               <p class="mb-1">Talle: <strong>${item.productVariant.size}</strong></p>
               <p class="mb-1">Cantidad: <strong>${item.quantity}</strong></p>
-
               <div class="mb-2 d-none" id="edit-section-${item.id}">
                 <label>Talle:</label>
                 <select id="edit-size-${item.id}" class="form-select form-select-sm mb-1 w-50">
@@ -58,13 +62,14 @@ async function cargarCarrito() {
           </div>
         </div>
       `;
-      console.log("Agregando item al carrito:", item.id, item.productVariant.product.name);
       cartItemsDiv.innerHTML += itemHTML;
     });
 
     totalSpan.textContent = total.toFixed(2);
     document.getElementById('carrito-compra').classList.remove('d-none');
     document.getElementById('resumen-compra').classList.add('d-none');
+
+    actualizarCostoEnvioYTotal(total);
 
   } catch (error) {
     console.error("Error al cargar el carrito:", error);
@@ -96,7 +101,6 @@ async function guardarCambios(id) {
 }
 
 async function eliminarProducto(id) {
-  console.log("Eliminando producto con ID:", id);
   try {
     await fetch(`http://localhost:3000/cart/removeCartItem/${id}`, {
       method: "DELETE",
@@ -108,6 +112,89 @@ async function eliminarProducto(id) {
   }
 }
 
+document.getElementById("confirmar-compra").addEventListener("click", async () => {
+  try {
+    const res = await fetch('http://localhost:3000/cart/getCart', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const carrito = await res.json();
+    const items = carrito.items || [];
+    if (items.length === 0) {
+      alert("Tu carrito está vacío.");
+      return;
+    }
+
+    const metodoEntrega = document.getElementById('metodo-envio').value;
+    const direccion = document.getElementById('direccion').value;
+    const provincia = document.getElementById('provincia').value;
+    const cp = document.getElementById('codigo-postal').value;
+
+    if (
+      metodoEntrega === "Envío a domicilio" &&
+      (!direccion.trim() || !provincia.trim() || !cp.trim())
+    ) {
+      alert("Por favor, completa todos los campos.");
+      return;
+    }
+
+    const payload = {
+      deliveryMethod: metodoEntrega,
+      address: direccion,
+      province: provincia,
+      postalCode: cp,
+    };
+
+    const resOrder = await fetch('http://localhost:3000/orders/createOrder', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify( payload ),
+    });
+
+    if (!resOrder.ok) {
+      const err = await resOrder.json();
+      throw new Error(err.message || "Error al crear el pedido.");
+    }
+
+    await fetch(`http://localhost:3000/cart/updateCartStatus/${carrito.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ newStatus: "confirmed" })
+    });
+
+    cargarCarrito();
+    document.getElementById('carrito-compra').classList.add('d-none');
+    document.getElementById('resumen-compra').classList.remove('d-none');
+  }
+  catch (error) {
+    console.error("Error al confirmar compra:", error);
+    alert("Ocurrió un error al confirmar la compra. Por favor, inténtalo de nuevo.");
+  }
+});
+
+function configurarMetodoEnvio() {
+  const metodoEnvio = document.getElementById("metodo-envio");
+  metodoEnvio.addEventListener("change", () => {
+    const mostrar = metodoEnvio.value === "Envío a domicilio";
+    document.getElementById("campo-direccion").classList.toggle("d-none", !mostrar);
+    document.getElementById("campo-provincia").classList.toggle("d-none", !mostrar);
+    document.getElementById("campo-codigo-postal").classList.toggle("d-none", !mostrar);
+    const total = parseFloat(document.getElementById("cart-total").textContent) || 0;
+    actualizarCostoEnvioYTotal(total);
+  });
+}
+
+function actualizarCostoEnvioYTotal(subtotal) {
+  const metodo = document.getElementById("metodo-envio").value;
+  const envio = metodo === "Envío a domicilio" ? 2500 : 0;
+  document.getElementById("costo-envio").textContent = `Costo de envío: $${envio.toFixed(2)}`;
+  document.getElementById("total-final").textContent = `Total final: $${(subtotal + envio).toFixed(2)}`;
+}
 
 // function configurarEventos() {
 //   document.getElementById('confirmar-compra').addEventListener('click', confirmarCompra);

@@ -2,7 +2,9 @@ const { addProductToCartService,
   getCartService,
   updateCartItemService,
   removeCartItemService,
-  clearCartService } = require('../services/cartService');
+  clearCartService,
+  updateCartStatusService
+} = require('../services/cartService');
 
 
  async function addProductToCart(req, res){
@@ -28,6 +30,21 @@ async function getCart(req, res) {
     res.json(cart);
   } catch (err) {
     console.error("Error al obtener el carrito:", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function updateCartStatus(req, res) {
+  try {
+    const dataSource = req.app.get('dataSource');
+    const userId = req.user.id; // Asegúrate de que el ID del usuario esté disponible en req.user
+    const cartId = req.params.id;
+    const newStatus = req.body.status; // Asumiendo que el nuevo estado se envía en el cuerpo de la solicitud
+
+    const result = await updateCartStatusService(dataSource, cartId, newStatus);
+    res.json(result);
+  } catch (err) {
+    console.error("Error al actualizar el estado del carrito:", err);
     res.status(500).json({ error: err.message });
   }
 }
@@ -78,5 +95,6 @@ module.exports = {
   getCart,
   updateCartItem,
   removeCartItem,
-  clearCart
+  clearCart,
+  updateCartStatus
 };
