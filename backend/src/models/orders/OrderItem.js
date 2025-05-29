@@ -1,20 +1,20 @@
 class OrderItem {
-  constructor() {
-    this.id = undefined;
-    this.productId = undefined;
-    this.productName = '';
-    this.productDescription = '';
-    this.productPrice = 0.00;
-    this.productImageUrl = '';
-    this.productVariantId = undefined;
-    this.categoryId = undefined;
-    this.categoryName = '';
-    this.variantQuantity = 1;
-    this.variantSize = '';
-    this.variantColor = '';
-    this.createdAt = undefined;
-    this.updatedAt = undefined;
-    this.order = undefined;
+  constructor(id, productId, productName, productDescription, productPrice, productImageUrl, productVariantId, categoryId, categoryName, variantQuantity, variantSize, variantColor, createdAt, updatedAt, order) {
+    this.id = id;
+    this.productId = productId;
+    this.productName = productName;
+    this.productDescription = productDescription;
+    this.productPrice = productPrice;
+    this.productImageUrl = productImageUrl;
+    this.productVariantId = productVariantId;
+    this.categoryId = categoryId;
+    this.categoryName = categoryName;
+    this.variantQuantity = variantQuantity;
+    this.variantSize = variantSize;
+    this.variantColor = variantColor;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
+    this.order = order;
   }
 }
 

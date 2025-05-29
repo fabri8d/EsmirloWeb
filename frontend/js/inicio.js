@@ -25,8 +25,8 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
 
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.user.role);
+        print(data.user.username)
         localStorage.setItem("username", data.user.username);
-        localStorage.setItem("username", data.user.email);
 
 
         irPrincipal()

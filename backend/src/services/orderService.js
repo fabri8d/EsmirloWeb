@@ -5,6 +5,7 @@ const OrderItem = require("../models/orders/OrderItem.js");
 const Order = require("../models/orders/Order.js");
 const Cart = require("../models/orders/Cart.js");
 const CartItem = require("../models/orders/CartItem.js");
+const User = require("../models/users/User.js");
 
 async function createOrderService(dataSource, orderData) {
   const cartRepo = dataSource.getRepository(Cart);
@@ -14,7 +15,7 @@ async function createOrderService(dataSource, orderData) {
 
   // Buscar el carrito con sus items y usuario
   const cart = await cartRepo.findOne({
-    where: { id: cartId, status: "open" },
+    where: { id: orderData.cartId, status: "open" },
     relations: ["items", "user"]
   });
 
@@ -38,7 +39,7 @@ async function createOrderService(dataSource, orderData) {
     user: user,
     status: "pending",
     totalAmount,
-    aaddress: orderData.address ?? null,
+    address: orderData.address ?? null,
     postalCode: orderData.postalCode ?? null,
     province: orderData.province ?? null,
     deliveryMethod: orderData.deliveryMethod || "store_pickup",
@@ -46,35 +47,41 @@ async function createOrderService(dataSource, orderData) {
     userFirstName: user.firstName,
     userLastName: user.lastName,
     userEmail: user.email,
-    items: [] // Se llenará abajo
+  });
+
+  const cartItems = await cartItemRepo.find({
+    where: { cart: { id: cart.id } },
+    relations: ["productVariant", "productVariant.product", "productVariant.product.category"]
   });
 
   // Crear los items de la orden
-  const orderItems = cart.items.map(cartItem =>
-    orderItemRepo.create({
-      productId: cartItem.productId,
-      productName: cartItem.productName,
-      productDescription: cartItem.productDescription,
-      productPrice: cartItem.productPrice,
-      productImageUrl: cartItem.productImageUrl,
-      productVariantId: cartItem.productVariantId,
-      categoryId: cartItem.categoryId,
-      categoryName: cartItem.categoryName,
-      variantQuantity: cartItem.quantity,
-      variantSize: cartItem.variantSize,
-      variantColor: cartItem.variantColor,
-      price: cartItem.price,
-      order: order
-    })
-  );
+  const orderItems = cartItems.map(cartItem =>
+  orderItemRepo.create({
+    productId: cartItem.productVariant.product.id,
+    productName: cartItem.productVariant.product.name,
+    productDescription: cartItem.productVariant.product.description,
+    productPrice: cartItem.productVariant.product.price,
+    productImageUrl: cartItem.productVariant.product.imageUrl,
+    productVariantId: cartItem.productVariant.id,
+    categoryId: cartItem.productVariant.product.category.id,
+    categoryName: cartItem.productVariant.product.category.name,
+    variantQuantity: cartItem.quantity,
+    variantSize: cartItem.productVariant.size,
+    variantColor: cartItem.productVariant.color,
+    price: cartItem.price,
+    order: order
+  })
+  
+);
+
 
   order.items = orderItems;
 
   // Guardar la orden y los items
   await orderRepo.save(order);
+  await orderItemRepo.save(orderItems);
 
-  // Marcar el carrito como "confirmed"
-  cart.status = "confirmed";
+  cart.status = "ordered";
   await cartRepo.save(cart);
 
   return order;
@@ -101,7 +108,7 @@ async function getOrdersByUserIdService(dataSource, userId) {
 
   // Buscar las órdenes del usuario con sus items
   const orders = await orderRepo.find({
-    where: { user: { id: userId } },
+    where: { user: { id: userId }},
     relations: ["items", "user"]
   });
 
@@ -183,11 +190,31 @@ async function getAllOrdersService(dataSource) {
 
   return orders;
 }
+
+async function getOrdersByUsernameService(dataSource, username) {
+  const orderRepo = dataSource.getRepository(Order);
+  const userRepo = dataSource.getRepository(User);
+  const user = await userRepo.findOne({
+    where: { username: username }
+  });
+  // Buscar las órdenes del usuario con sus items
+  const orders = await orderRepo.find({
+    where: { user: { id: user.id }},
+    relations: ["items", "user"]
+  });
+
+  if (orders.length === 0) {
+    throw new Error("No se encontraron órdenes para este usuario.");
+  }
+
+  return orders;
+}
 module.exports = {
   createOrderService,
   getOrderByIdService,
   getOrdersByUserIdService,
   cancelOrderService,
   updateOrderStatusService,
-  getAllOrdersService
+  getAllOrdersService,
+  getOrdersByUsernameService
 };

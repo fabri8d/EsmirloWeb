@@ -17,6 +17,12 @@ function updateCartCount() {
     }
 }
 
+document.getElementById("logout-button").addEventListener("click", () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  window.location.href = "../pages/inicio.html"; // Redirigir al inicio
+});
+
 // Función para agregar producto al carrito
 // function addToCart(nombre, precio, talle) {
 //     let cart = JSON.parse(localStorage.getItem('carrito')) || [];
