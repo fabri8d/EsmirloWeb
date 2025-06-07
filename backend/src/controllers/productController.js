@@ -1,4 +1,4 @@
-const { createProductService, purchaseVariantService, changePriceProductService, getProductsService, getProductByIDService, getProductsByCategoryService, getProductsByNameService, getVariantsByProductService } = require("../services/productService");
+const { createProductService, purchaseVariantService, changePriceProductService, getProductsService, getProductByIDService, getProductsByCategoryService, getProductsByNameService, getVariantsByProductService, updateVariantStockService, deleteProductService, deleteVariantService, createVariantService } = require("../services/productService");
 
 async function createProduct(req, res) {
   try {
@@ -40,12 +40,13 @@ async function purchaseVariant(req, res) {
 async function changePriceProduct(req, res) {
   try {
     const dataSource = req.app.get("dataSource");
-    const result = await changePriceProductService(dataSource, req.body);
+    const productId = req.params.id;
+    const newPrice = req.body.price;
+    const result = await changePriceProductService(dataSource, productId, newPrice);
     res.status(200).json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-
 }
 
 async function getProducts(req, res) {
@@ -100,6 +101,50 @@ async function getVariantsByProduct(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+async function updateVariantStock(req, res) {
+  try {
+    const dataSource = req.app.get("dataSource");
+    const variantId = req.params.id;
+    const updatedData = req.body;
+
+    const result = await updateVariantStockService(dataSource, variantId, updatedData);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+async function deleteProduct(req, res) {
+  try {
+    const dataSource = req.app.get("dataSource");
+    const productId = req.params.id;
+    const result = await deleteProductService(dataSource, productId);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+async function deleteVariant(req, res) {
+  try {
+    const dataSource = req.app.get("dataSource");
+    const variantId = req.params.id;
+    const result = await deleteVariantService(dataSource, variantId);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+async function createVariant(req, res) {
+  try {
+    const dataSource = req.app.get("dataSource");
+    const productId = req.body.productId;
+    const variantData = req.body;
+
+    const result = await createVariantService(dataSource, productId, variantData);
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
 module.exports = {
   createProduct,
   purchaseVariant,
@@ -108,5 +153,9 @@ module.exports = {
   getProductByID,
   getProductsByCategory,
   getProductsByName,
-  getVariantsByProduct
+  getVariantsByProduct,
+  updateVariantStock,
+  deleteProduct,
+  deleteVariant,
+  createVariant
 };

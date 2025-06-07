@@ -12,6 +12,7 @@ async function createOrderService(dataSource, orderData) {
   const cartItemRepo = dataSource.getRepository(CartItem);
   const orderRepo = dataSource.getRepository(Order);
   const orderItemRepo = dataSource.getRepository(OrderItem);
+  const productVariantRepo = dataSource.getRepository(ProductVariant);
 
   // Buscar el carrito con sus items y usuario
   const cart = await cartRepo.findOne({
@@ -24,17 +25,31 @@ async function createOrderService(dataSource, orderData) {
   }
 
   if (cart.items.length === 0) {
-    throw new Error("Carrito vacio.");
+    throw new Error("Carrito vacío.");
+  }
+
+  // Obtener ítems del carrito con relaciones completas
+  const cartItems = await cartItemRepo.find({
+    where: { cart: { id: cart.id } },
+    relations: ["productVariant", "productVariant.product", "productVariant.product.category"]
+  });
+
+  // Verificar stock
+  for (const item of cartItems) {
+    const variant = item.productVariant;
+    if (variant.stock < item.quantity) {
+      throw new Error(`Stock insuficiente para ${variant.product.name} (${variant.color}, ${variant.size}).`);
+    }
   }
 
   const user = cart.user;
 
   // Calcular el total
   const totalAmount = cart.items.reduce((sum, item) => {
-    return sum + parseFloat(item.price);
+    return sum + parseFloat(item.price * item.quantity);
   }, 0);
 
-  // Crear la orden
+  // Crear la orden sin ítems aún
   const order = orderRepo.create({
     user: user,
     status: "pending",
@@ -49,43 +64,52 @@ async function createOrderService(dataSource, orderData) {
     userEmail: user.email,
   });
 
-  const cartItems = await cartItemRepo.find({
-    where: { cart: { id: cart.id } },
-    relations: ["productVariant", "productVariant.product", "productVariant.product.category"]
-  });
+  const savedOrder = await orderRepo.save(order);
 
   // Crear los items de la orden
   const orderItems = cartItems.map(cartItem =>
-  orderItemRepo.create({
-    productId: cartItem.productVariant.product.id,
-    productName: cartItem.productVariant.product.name,
-    productDescription: cartItem.productVariant.product.description,
-    productPrice: cartItem.productVariant.product.price,
-    productImageUrl: cartItem.productVariant.product.imageUrl,
-    productVariantId: cartItem.productVariant.id,
-    categoryId: cartItem.productVariant.product.category.id,
-    categoryName: cartItem.productVariant.product.category.name,
-    variantQuantity: cartItem.quantity,
-    variantSize: cartItem.productVariant.size,
-    variantColor: cartItem.productVariant.color,
-    price: cartItem.price,
-    order: order
-  })
-  
-);
+    orderItemRepo.create({
+      productId: cartItem.productVariant.product.id,
+      productName: cartItem.productVariant.product.name,
+      productDescription: cartItem.productVariant.product.description,
+      productPrice: cartItem.productVariant.product.price,
+      productImageUrl: cartItem.productVariant.product.imageUrl,
+      productVariantId: cartItem.productVariant.id,
+      categoryId: cartItem.productVariant.product.category.id,
+      categoryName: cartItem.productVariant.product.category.name,
+      variantQuantity: cartItem.quantity,
+      variantSize: cartItem.productVariant.size,
+      variantColor: cartItem.productVariant.color,
+      price: cartItem.price,
+      order: savedOrder
+    })
+  );
 
-
-  order.items = orderItems;
-
-  // Guardar la orden y los items
-  await orderRepo.save(order);
+  // Guardar los ítems de la orden
   await orderItemRepo.save(orderItems);
 
+  // Descontar stock
+  for (const item of cartItems) {
+    const variant = item.productVariant;
+    variant.stock -= item.quantity;
+
+    if (variant.stock < 0) {
+      throw new Error(`Error interno: stock negativo para ${variant.product.name} (${variant.color}, ${variant.size})`);
+    }
+
+    await productVariantRepo.save(variant);
+  }
+
+  // Marcar carrito como ordenado
   cart.status = "ordered";
   await cartRepo.save(cart);
 
-  return order;
+  // Retornar la orden con ítems
+  savedOrder.items = orderItems;
+  return savedOrder;
 }
+
+
 
 async function getOrderByIdService(dataSource, orderId) {
   const orderRepo = dataSource.getRepository(Order);
@@ -108,7 +132,7 @@ async function getOrdersByUserIdService(dataSource, userId) {
 
   // Buscar las órdenes del usuario con sus items
   const orders = await orderRepo.find({
-    where: { user: { id: userId }},
+    where: { user: { id: userId } },
     relations: ["items", "user"]
   });
 
@@ -199,7 +223,7 @@ async function getOrdersByUsernameService(dataSource, username) {
   });
   // Buscar las órdenes del usuario con sus items
   const orders = await orderRepo.find({
-    where: { user: { id: user.id }},
+    where: { user: { id: user.id } },
     relations: ["items", "user"]
   });
 

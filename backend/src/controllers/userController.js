@@ -1,0 +1,53 @@
+const { AppDataSource } = require("../data-base/data-source.js");
+const userService = require("../services/userService.js");
+
+async function getUsers(req, res) {
+    try {
+        const dataSource = req.app.get("dataSource");
+
+        const users = await userService.getUsersService(dataSource);
+        res.json(users);
+    } catch (error) {
+        console.error("Error al obtener usuarios:", error);
+        res.status(500).json({ error: "No se pudieron obtener los usuarios" });
+    }
+}
+async function getUserById(req, res) {
+    const userId = req.params.id;
+    try {
+        const dataSource = req.app.get("dataSource");
+        const user = await userService.getUserByIdService(dataSource, userId);
+        res.json(user);
+    } catch (error) {
+        console.error("Error al obtener el usuario:", error);
+        res.status(500).json({ error: "No se pudo obtener el usuario" });
+    }
+}
+async function getUserByUsername(req, res) {
+    const username = req.params.username;
+    try {
+        const dataSource = req.app.get("dataSource");
+        const user = await userService.getUserByUsernameService(dataSource, username);
+        res.json(user);
+    } catch (error) {
+        console.error("Error al obtener el usuario:", error);
+        res.status(500).json({ error: "No se pudo obtener el usuario" });
+    }
+}
+async function deleteUser(req, res) {
+    const userId = req.params.id;
+    try {
+        const dataSource = req.app.get("dataSource");
+        const result = await userService.deleteUserService(dataSource, userId);
+        res.json(result);
+    } catch (error) {
+        console.error("Error al eliminar el usuario:", error);
+        res.status(500).json({ error: "No se pudo eliminar el usuario" });
+    }
+}
+module.exports = {
+    getUsers,
+    getUserById,
+    getUserByUsername,
+    deleteUser
+};

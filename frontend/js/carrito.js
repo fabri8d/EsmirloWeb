@@ -1,6 +1,8 @@
+import { checkSession } from "../utils/sessions.js";
 const token = localStorage.getItem("token");
 const username = localStorage.getItem("username");
 document.addEventListener('DOMContentLoaded', () => {
+  if (!checkSession()) return;
   cargarCarrito();
   configurarMetodoEnvio();
   cargarPedidosUsuario();
@@ -205,7 +207,6 @@ function actualizarCostoEnvioYTotal(subtotal) {
 }
 
 async function cargarPedidosUsuario() {
-  console.log("Cargando pedidos para el usuario:", username);
   try {
     const res = await fetch(`http://localhost:3000/orders/getOrdersByUsername/${username}`, {
       headers: { 'Authorization': `Bearer ${token}` }
@@ -219,41 +220,35 @@ async function cargarPedidosUsuario() {
       contenedor.innerHTML = `<p>No hay pedidos registrados.</p>`;
       return;
     }
-    console.log("Respuesta del backend:", pedidos);
-    console.log("Items del primer pedido:", pedidos[0]?.items);
-    pedidos.forEach(pedido => {
+
+    pedidos.forEach((pedido, index) => {
       const fecha = new Date(pedido.createdAt).toLocaleDateString();
       let estado = pedido.status;
       const total = pedido.totalAmount;
       const metodo = pedido.deliveryMethod === "home_delivery" ? "A domicilio" : "Retiro en tienda";
-      
-      // Traducción del estado
+
       if (estado === "cancelled") estado = "Cancelado";
       else if (estado === "completed") estado = "Entregado";
       else if (estado === "pending") estado = "Pendiente";
       else if (estado === "paid") estado = "Pago realizado";
       else if (estado === "shipped") estado = "Enviado";
-      // Lista de productos
-      let itemsHTML = "";
-      if (pedido.items && pedido.items.length > 0) {
-        itemsHTML = `
-          <div class="mt-3">
-            <h6>Productos:</h6>
-            <ul class="list-group">
-              ${pedido.items.map(item => `
-                <li class="list-group-item">
-                  <strong>${item.productName}</strong> - 
-                  Color: ${item.variantColor}, 
-                  Talla: ${item.variantSize}, 
-                  Cantidad: ${item.variantQuantity}
-                </li>
-              `).join("")}
-            </ul>
-          </div>
-        `;
-      }
 
-      // Plantilla final
+      const itemsHTML = pedido.items && pedido.items.length > 0 ? `
+        <div class="mt-3 d-none" id="productos-${pedido.id}">
+          <h6>Productos:</h6>
+          <ul class="list-group">
+            ${pedido.items.map(item => `
+              <li class="list-group-item">
+                <strong>${item.productName}</strong> - 
+                Color: ${item.variantColor}, 
+                Talla: ${item.variantSize}, 
+                Cantidad: ${item.variantQuantity}
+              </li>
+            `).join("")}
+          </ul>
+        </div>
+      ` : "";
+
       const pedidoHTML = `
         <div class="card mb-3 p-3 shadow-sm">
           <h5>Pedido #${pedido.id}</h5>
@@ -261,6 +256,7 @@ async function cargarPedidosUsuario() {
           <p><strong>Método de envío:</strong> ${metodo}</p>
           <p><strong>Total:</strong> $${total}</p>
           <p><strong>Estado:</strong> ${estado}</p>
+          <button class="btn btn-sm btn-primary" onclick="toggleProductos(${pedido.id})">Ver/Ocultar productos</button>
           ${itemsHTML}
         </div>
       `;
@@ -273,3 +269,20 @@ async function cargarPedidosUsuario() {
     document.getElementById("orders-list").innerHTML = "<p class='text-danger'>No se pudieron cargar tus pedidos.</p>";
   }
 }
+
+// Función auxiliar para mostrar/ocultar productos
+function toggleProductos(pedidoId) {
+  const div = document.getElementById(`productos-${pedidoId}`);
+  if (div) {
+    div.classList.toggle('d-none');
+  }
+};
+
+window.toggleProductos = toggleProductos;
+window.mostrarEditor = mostrarEditor;
+window.guardarCambios = guardarCambios;
+window.eliminarProducto = eliminarProducto;
+window.configurarMetodoEnvio = configurarMetodoEnvio;
+
+
+
