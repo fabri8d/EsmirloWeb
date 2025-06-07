@@ -5,6 +5,7 @@ const authRoutes = require("./routes/authRoutes.js");
 const categoryRoutes = require("./routes/categoryRoutes.js");
 const orderRoutes = require("./routes/orderRoutes.js");
 const cartRoutes = require("./routes/cartRoutes.js");
+const userRoutes = require("./routes/userRoutes.js");
 require('dotenv').config();
 
 const app = express();
@@ -16,5 +17,6 @@ app.use("/api/auth", authRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/orders", orderRoutes);
 app.use("/cart", cartRoutes);
+app.use("/users", userRoutes);
 
 module.exports = app;

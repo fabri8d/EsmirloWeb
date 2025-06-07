@@ -19,7 +19,6 @@ async function createProductService(dataSource, productData) {
     const result = await cloudinary.uploader.upload(productData.image.path, {
       folder: "productos"
     });
-    console.log(result.secure_url)
     imageUrl = result.secure_url;
 
     // Elimina el archivo temporal del servidor si estás usando multer
@@ -113,26 +112,25 @@ async function purchaseVariantService(dataSource, { productId, variant, quantity
   };
 }
 
-async function changePriceProductService(dataSource, { productData, newPrice }) {
+async function changePriceProductService(dataSource, productId, newPrice) {
   const productRepo = dataSource.getRepository(Product);
-
   const product = await productRepo.findOne({
-    where: { id: productData.id },
+    where: { id: parseInt(productId) },
   });
+  if (!product) throw new Error("No existe este producto.");
 
-  if (!product) throw new Error("Producto no encontrado");
-  if (typeof newPrice !== "number" || newPrice <= 0) {
-    throw new Error("El nuevo precio debe ser un número mayor que cero.");
-  }
+  const parsedPrice = parseFloat(newPrice);
+  if (isNaN(parsedPrice)) throw new Error("Precio inválido. Debe ser un número.");
 
-  product.price = newPrice;
+  product.price = parsedPrice;
   await productRepo.save(product);
 
   return {
-    message: "Cambio de precio realizado con exito",
-    product: { name: product.name, price: product.price }
+    message: "Precio actualizado con éxito",
+    product,
   };
 }
+
 
 async function getProductsService(dataSource) {
   const productRepo = dataSource.getRepository(Product);
@@ -192,7 +190,83 @@ async function getVariantsByProductService(dataSource, productId) {
   if (!variants) throw new Error("No existen variantes del producto " + productData.name);
   return await variants
 }
+async function updateVariantStockService(dataSource, variantId ,variantData) {
+  const variantRepo = dataSource.getRepository(ProductVariant);
+  const variant = await variantRepo.findOne({
+    where: { id: variantId },
+    relations: ["product"],
+  });
+  if (!variant) throw new Error("No existe la variante con ID " + variantData.id);
 
+  // Actualizar los campos de la variante
+  variant.stock = variantData.stock || variant.stock;
+
+  await variantRepo.save(variant);
+  return {
+    message: "Variante actualizada con éxito",
+    variant,
+  };
+}
+async function deleteVariantService(dataSource, variantId) {
+  const variantRepo = dataSource.getRepository(ProductVariant);
+  const variant = await variantRepo.findOne({
+    where: { id: variantId },
+     
+  });
+  if (!variant) throw new Error("No existe la variante con ID " + variantId);
+
+  await variantRepo.remove(variant);
+  return {
+    message: "Variante eliminada con éxito",
+    variant,
+  };
+}
+async function deleteProductService(dataSource, productId) {
+  const productRepo = dataSource.getRepository(Product);
+  const product = await productRepo.findOne({
+    where: { id: productId },
+  });
+  if (!product) throw new Error("No existe el producto con ID " + productId);
+
+  await productRepo.remove(product);
+  return {
+    message: "Producto eliminado con éxito",
+    product,
+  };
+}
+async function createVariantService(dataSource, productId, variantData) {
+  const productRepo = dataSource.getRepository(Product);
+  const variantRepo = dataSource.getRepository(ProductVariant);
+
+  const product = await productRepo.findOne({
+    where: { id: productId },
+  });
+  if (!product) throw new Error("Producto no encontrado");
+
+  // Verificar si ya existe una variante con el mismo tamaño y color
+  const existingVariant = await variantRepo.findOne({
+    where: {
+      product: { id: product.id },
+      size: variantData.size,
+      color: variantData.color,
+    },
+  });
+  if (existingVariant) {
+    throw new Error(`Ya existe una variante con tamaño "${variantData.size}" y color "${variantData.color}".`);
+  }
+
+  // Crear la nueva variante
+  const newVariant = variantRepo.create({
+    size: variantData.size,
+    color: variantData.color,
+    stock: variantData.stock,
+    product: product,
+  });
+
+  await variantRepo.save(newVariant);
+
+  return newVariant;
+}
 module.exports = {
   createProductService,
   purchaseVariantService,
@@ -201,6 +275,10 @@ module.exports = {
   getProductByIDService,
   getProductsByNameService,
   getProductsByCategoryService,
-  getVariantsByProductService
+  getVariantsByProductService,
+  updateVariantStockService,
+  deleteVariantService,
+  deleteProductService,
+  createVariantService
 };
 

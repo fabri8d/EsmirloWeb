@@ -1,12 +1,11 @@
-const {createOrderService, getOrderByIdService, updateOrderStatusService, cancelOrderService, getAllOrdersService, getOrdersByUserIdService} = require('../services/orderService');
+const {createOrderService, getOrderByIdService, updateOrderStatusService, cancelOrderService, getAllOrdersService, getOrdersByUserIdService, getOrdersByUsernameService} = require('../services/orderService');
 
 async function createOrder(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
-    const userId = req.user.id; // Assuming user ID is available in req.user
     const orderData = req.body;
 
-    const result = await createOrderService(dataSource, userId, orderData);
+    const result = await createOrderService(dataSource, orderData);
     res.status(201).json(result);
   } catch (err) {
     console.error("Error creating order:", err);
@@ -25,6 +24,7 @@ async function getOrderById(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+
 async function updateOrderStatus(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
@@ -72,11 +72,24 @@ async function getOrdersByUserId(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+async function getOrdersByUsername(req, res) {
+  try {
+    const dataSource = req.app.get('dataSource');
+    const username = req.user.username; // Assuming user ID is available in req.user
+
+    const orders = await getOrdersByUsernameService(dataSource, username);
+    res.json(orders);
+  } catch (err) {
+    console.error("Error fetching orders by user ID:", err);
+    res.status(500).json({ error: err.message });
+  }
+}
 module.exports = {
   createOrder,
   getOrderById,
   updateOrderStatus,
   cancelOrder,
   getAllOrders,
-  getOrdersByUserId
+  getOrdersByUserId,
+  getOrdersByUsername
 };

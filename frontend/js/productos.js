@@ -1,3 +1,4 @@
+import { checkSession, logout } from "../utils/sessions.js";
 const createMessage = document.getElementById("create-message");
 const purchaseMessage = document.getElementById("purchase-message");
 const categorySelect = document.getElementById("category-select");
@@ -7,6 +8,7 @@ const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (!checkSession()) return;
   if (role !== "admin") {
     console.log("Debes ser administrador.");
     return;
@@ -150,3 +152,5 @@ function agregarVariante() {
 }
 
 
+window.agregarVariante = agregarVariante;
+window.logout = logout;

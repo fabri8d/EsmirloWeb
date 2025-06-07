@@ -5,16 +5,18 @@ const OrderItem = require("../models/orders/OrderItem.js");
 const Order = require("../models/orders/Order.js");
 const Cart = require("../models/orders/Cart.js");
 const CartItem = require("../models/orders/CartItem.js");
+const User = require("../models/users/User.js");
 
 async function createOrderService(dataSource, orderData) {
   const cartRepo = dataSource.getRepository(Cart);
   const cartItemRepo = dataSource.getRepository(CartItem);
   const orderRepo = dataSource.getRepository(Order);
   const orderItemRepo = dataSource.getRepository(OrderItem);
+  const productVariantRepo = dataSource.getRepository(ProductVariant);
 
   // Buscar el carrito con sus items y usuario
   const cart = await cartRepo.findOne({
-    where: { id: cartId, status: "open" },
+    where: { id: orderData.cartId, status: "open" },
     relations: ["items", "user"]
   });
 
@@ -23,22 +25,36 @@ async function createOrderService(dataSource, orderData) {
   }
 
   if (cart.items.length === 0) {
-    throw new Error("Carrito vacio.");
+    throw new Error("Carrito vacío.");
+  }
+
+  // Obtener ítems del carrito con relaciones completas
+  const cartItems = await cartItemRepo.find({
+    where: { cart: { id: cart.id } },
+    relations: ["productVariant", "productVariant.product", "productVariant.product.category"]
+  });
+
+  // Verificar stock
+  for (const item of cartItems) {
+    const variant = item.productVariant;
+    if (variant.stock < item.quantity) {
+      throw new Error(`Stock insuficiente para ${variant.product.name} (${variant.color}, ${variant.size}).`);
+    }
   }
 
   const user = cart.user;
 
   // Calcular el total
   const totalAmount = cart.items.reduce((sum, item) => {
-    return sum + parseFloat(item.price);
+    return sum + parseFloat(item.price * item.quantity);
   }, 0);
 
-  // Crear la orden
+  // Crear la orden sin ítems aún
   const order = orderRepo.create({
     user: user,
     status: "pending",
     totalAmount,
-    aaddress: orderData.address ?? null,
+    address: orderData.address ?? null,
     postalCode: orderData.postalCode ?? null,
     province: orderData.province ?? null,
     deliveryMethod: orderData.deliveryMethod || "store_pickup",
@@ -46,39 +62,54 @@ async function createOrderService(dataSource, orderData) {
     userFirstName: user.firstName,
     userLastName: user.lastName,
     userEmail: user.email,
-    items: [] // Se llenará abajo
   });
 
+  const savedOrder = await orderRepo.save(order);
+
   // Crear los items de la orden
-  const orderItems = cart.items.map(cartItem =>
+  const orderItems = cartItems.map(cartItem =>
     orderItemRepo.create({
-      productId: cartItem.productId,
-      productName: cartItem.productName,
-      productDescription: cartItem.productDescription,
-      productPrice: cartItem.productPrice,
-      productImageUrl: cartItem.productImageUrl,
-      productVariantId: cartItem.productVariantId,
-      categoryId: cartItem.categoryId,
-      categoryName: cartItem.categoryName,
+      productId: cartItem.productVariant.product.id,
+      productName: cartItem.productVariant.product.name,
+      productDescription: cartItem.productVariant.product.description,
+      productPrice: cartItem.productVariant.product.price,
+      productImageUrl: cartItem.productVariant.product.imageUrl,
+      productVariantId: cartItem.productVariant.id,
+      categoryId: cartItem.productVariant.product.category.id,
+      categoryName: cartItem.productVariant.product.category.name,
       variantQuantity: cartItem.quantity,
-      variantSize: cartItem.variantSize,
-      variantColor: cartItem.variantColor,
+      variantSize: cartItem.productVariant.size,
+      variantColor: cartItem.productVariant.color,
       price: cartItem.price,
-      order: order
+      order: savedOrder
     })
   );
 
-  order.items = orderItems;
+  // Guardar los ítems de la orden
+  await orderItemRepo.save(orderItems);
 
-  // Guardar la orden y los items
-  await orderRepo.save(order);
+  // Descontar stock
+  for (const item of cartItems) {
+    const variant = item.productVariant;
+    variant.stock -= item.quantity;
 
-  // Marcar el carrito como "confirmed"
-  cart.status = "confirmed";
+    if (variant.stock < 0) {
+      throw new Error(`Error interno: stock negativo para ${variant.product.name} (${variant.color}, ${variant.size})`);
+    }
+
+    await productVariantRepo.save(variant);
+  }
+
+  // Marcar carrito como ordenado
+  cart.status = "ordered";
   await cartRepo.save(cart);
 
-  return order;
+  // Retornar la orden con ítems
+  savedOrder.items = orderItems;
+  return savedOrder;
 }
+
+
 
 async function getOrderByIdService(dataSource, orderId) {
   const orderRepo = dataSource.getRepository(Order);
@@ -183,11 +214,31 @@ async function getAllOrdersService(dataSource) {
 
   return orders;
 }
+
+async function getOrdersByUsernameService(dataSource, username) {
+  const orderRepo = dataSource.getRepository(Order);
+  const userRepo = dataSource.getRepository(User);
+  const user = await userRepo.findOne({
+    where: { username: username }
+  });
+  // Buscar las órdenes del usuario con sus items
+  const orders = await orderRepo.find({
+    where: { user: { id: user.id } },
+    relations: ["items", "user"]
+  });
+
+  if (orders.length === 0) {
+    throw new Error("No se encontraron órdenes para este usuario.");
+  }
+
+  return orders;
+}
 module.exports = {
   createOrderService,
   getOrderByIdService,
   getOrdersByUserIdService,
   cancelOrderService,
   updateOrderStatusService,
-  getAllOrdersService
+  getAllOrdersService,
+  getOrdersByUsernameService
 };

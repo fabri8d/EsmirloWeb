@@ -1,20 +1,20 @@
 class Order {
-  constructor() {
-    this.id = undefined;
-    this.createdAt = undefined;
-    this.updatedAt = undefined;
-    this.status = 'pending';
-    this.totalAmount = 0.00;
-    this.deliveryMethod = 'store_pickup';
-    this.address = null;
-    this.postalCode = null;
-    this.province = null;
-    this.username = '';
-    this.userFirstName = '';
-    this.userLastName = '';
-    this.userEmail = '';
-    this.user = undefined;
-    this.items = [];
+  constructor(id, createdAt, updatedAt, status, totalAmount, deliveryMethod, address, postalCode, province, username, userFirstName, userLastName, userEmail, user, items) {
+    this.id = id;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
+    this.status = status;
+    this.totalAmount = totalAmount;
+    this.deliveryMethod = deliveryMethod;
+    this.address = address;
+    this.postalCode = postalCode;
+    this.province = province;
+    this.username = username;
+    this.userFirstName = userFirstName;
+    this.userLastName = userLastName;
+    this.userEmail = userEmail;
+    this.user = user;
+    this.items = items;
   }
 }
 
