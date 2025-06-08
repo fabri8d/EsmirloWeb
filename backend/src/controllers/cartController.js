@@ -3,7 +3,8 @@ const { addProductToCartService,
   updateCartItemService,
   removeCartItemService,
   clearCartService,
-  updateCartStatusService
+  updateCartStatusService,
+  getItemCountService
 } = require('../services/cartService');
 
 
@@ -52,11 +53,12 @@ async function updateCartStatus(req, res) {
 async function updateCartItem(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
-    const userId = req.user.id; // Asegúrate de que el ID del usuario esté disponible en req.user
+    const userId = req.user.id; 
     const cartItemId = req.params.id;
     const quantity = req.body.quantity;
-
-    const result = await updateCartItemService(dataSource, userId, cartItemId, quantity);
+    const size = req.body.size;
+    console.log("Datos recibidos:", { userId, cartItemId, quantity, size });
+    const result = await updateCartItemService(dataSource, userId, cartItemId, quantity, size);
     res.json(result);
   } catch (err) {
     console.error("Error al actualizar el artículo del carrito:", err);
@@ -67,7 +69,7 @@ async function updateCartItem(req, res) {
 async function removeCartItem(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
-    const userId = req.user.id; // Asegúrate de que el ID del usuario esté disponible en req.user
+    const userId = req.user.id;
     const cartItemId = req.params.id;
 
     const result = await removeCartItemService(dataSource, userId, cartItemId);
@@ -81,7 +83,7 @@ async function removeCartItem(req, res) {
 async function clearCart(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
-    const userId = req.user.id; // Asegúrate de que el ID del usuario esté disponible en req.user
+    const userId = req.user.id; 
 
     const result = await clearCartService(dataSource, userId);
     res.json(result);
@@ -90,11 +92,25 @@ async function clearCart(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+async function getItemCount(req, res) {
+  try {
+    const dataSource = req.app.get('dataSource');
+    const userId = req.user.id;
+
+    const count = await getItemCountService(dataSource, userId);
+    res.json({ count });
+  } catch (err) {
+    console.error("Error al obtener la cantidad de artículos en el carrito:", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   addProductToCart,
   getCart,
   updateCartItem,
   removeCartItem,
   clearCart,
-  updateCartStatus
+  updateCartStatus,
+  getItemCount
 };

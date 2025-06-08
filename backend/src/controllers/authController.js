@@ -9,7 +9,7 @@ async function register(req, res) {
     res.status(201).json({ message: "Usuario creado", user });
   } catch (error) {
     console.error("Error en registro:", error);
-    res.status(400).json({ error: error.message });  // Aquí siempre hay json
+    res.status(400).json({ error: error.message });  
   }
 }
 
@@ -20,7 +20,7 @@ async function login(req, res) {
     res.json({ message: "Login exitoso", user, token });
   } catch (error) {
     console.error("Error en login:", error);
-    res.status(401).json({ error: error.message });  // Aquí también
+    res.status(401).json({ error: error.message });  
   }
 }
 

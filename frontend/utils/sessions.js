@@ -23,3 +23,9 @@ export function logout() {
   localStorage.removeItem("token");
   window.location.href = "../pages/inicio.html";
 }
+export function adminOnly() {
+    const role = localStorage.getItem("role");
+    if (role !== "admin") {
+        document.getElementById("admin-panel").remove("d-none");
+    }
+}

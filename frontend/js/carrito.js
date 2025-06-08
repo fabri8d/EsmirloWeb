@@ -1,11 +1,14 @@
 import { checkSession } from "../utils/sessions.js";
+import { contadorCarrito } from "../utils/carts.js";
 const token = localStorage.getItem("token");
 const username = localStorage.getItem("username");
 document.addEventListener('DOMContentLoaded', () => {
   if (!checkSession()) return;
+  contadorCarrito();
   cargarCarrito();
   configurarMetodoEnvio();
   cargarPedidosUsuario();
+
 });
 
 async function cargarCarrito() {
@@ -19,11 +22,9 @@ async function cargarCarrito() {
 
     const cartItemsDiv = document.getElementById('cart-items');
     const totalSpan = document.getElementById('cart-total');
-    const cartCount = document.getElementById('cart-count');
     cartItemsDiv.innerHTML = '';
     let total = 0;
 
-    cartCount.textContent = items.length;
 
     if (items.length === 0) {
       document.getElementById('carrito-compra').classList.add('d-none');
@@ -38,13 +39,17 @@ async function cargarCarrito() {
       const precio = Number(item.price);
       const subtotal = precio * item.quantity;
       total += subtotal;
-      const talles = ['S', 'M', 'L', 'XL', 'XXL'];
+      const colorActual = item.productVariant?.color;
+      const talles = item.productVariant?.product?.variants
+        ?.filter(v => v.color === colorActual)
+        .map(v => v.size) || [];
       const itemHTML = `
         <div class="col-12 card p-3 shadow-sm" id="item-${item.id}">
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h5>${item.productVariant.product.name}</h5>
-              <p class="mb-1">Precio: $${precio.toFixed(2)}</p>
+              <p class="mb-1">Precio: <strong>$${precio.toFixed(2)}</strong></p>
+              <p class="mb-1">Color: <strong>${item.productVariant.color}</strong></p>
               <p class="mb-1">Talle: <strong>${item.productVariant.size}</strong></p>
               <p class="mb-1">Cantidad: <strong>${item.quantity}</strong></p>
               <div class="mb-2 d-none" id="edit-section-${item.id}">
@@ -87,6 +92,7 @@ function mostrarEditor(id) {
 async function guardarCambios(id) {
   const nuevaCantidad = parseInt(document.getElementById(`edit-quantity-${id}`).value);
   const nuevoTalle = document.getElementById(`edit-size-${id}`).value;
+  console.log('Actualizar ítem', id, 'Cantidad:', nuevaCantidad, 'Talle:', nuevoTalle);
 
   try {
     await fetch(`http://localhost:3000/cart/updateCartItem/${id}`, {
@@ -270,7 +276,6 @@ async function cargarPedidosUsuario() {
   }
 }
 
-// Función auxiliar para mostrar/ocultar productos
 function toggleProductos(pedidoId) {
   const div = document.getElementById(`productos-${pedidoId}`);
   if (div) {

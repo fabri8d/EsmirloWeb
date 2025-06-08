@@ -13,7 +13,6 @@ async function createProductService(dataSource, productData) {
     throw new Error("Ya existe un producto con ese nombre.");
   }
 
-  // 📤 Subir imagen a Cloudinary
   let imageUrl;
   if (productData.image && productData.image.path) {
     const result = await cloudinary.uploader.upload(productData.image.path, {
@@ -21,12 +20,11 @@ async function createProductService(dataSource, productData) {
     });
     imageUrl = result.secure_url;
 
-    // Elimina el archivo temporal del servidor si estás usando multer
     await fs.unlink(productData.image.path);
   } else {
     throw new Error("No se proporcionó imagen válida.");
   }
-  // 🛠 Crear el producto
+
   const product = productRepo.create({
     name: productData.name,
     description: productData.description,
@@ -37,7 +35,6 @@ async function createProductService(dataSource, productData) {
 
   await productRepo.save(product);
 
-  // ✅ Verificar duplicados de variantes
   for (const variant of productData.variants) {
     const duplicateVariant = await variantRepo.findOne({
       where: {
@@ -53,7 +50,6 @@ async function createProductService(dataSource, productData) {
     }
   }
 
-  // 🛠 Crear variantes
   const variants = productData.variants.map(variant =>
     variantRepo.create({
       size: variant.size,
@@ -76,9 +72,7 @@ async function createProductService(dataSource, productData) {
   };
 }
 
-/**
- * Realizar compra de una variante (actualiza stock)
- */
+
 async function purchaseVariantService(dataSource, { productId, variant, quantity }) {
   const productRepo = dataSource.getRepository(Product);
   const variantRepo = dataSource.getRepository(ProductVariant);
@@ -143,6 +137,7 @@ async function getProductByIDService(dataSource, productId) {
   const productRepo = dataSource.getRepository(Product);
   const product = await productRepo.findOne({
     where: { id: parseInt(productId) },
+    relations: ["variants", "category"]
   });
   if (!product) throw new Error("No existe este producto.");
   return product;
@@ -198,7 +193,6 @@ async function updateVariantStockService(dataSource, variantId ,variantData) {
   });
   if (!variant) throw new Error("No existe la variante con ID " + variantData.id);
 
-  // Actualizar los campos de la variante
   variant.stock = variantData.stock || variant.stock;
 
   await variantRepo.save(variant);
@@ -243,7 +237,6 @@ async function createVariantService(dataSource, productId, variantData) {
   });
   if (!product) throw new Error("Producto no encontrado");
 
-  // Verificar si ya existe una variante con el mismo tamaño y color
   const existingVariant = await variantRepo.findOne({
     where: {
       product: { id: product.id },
@@ -255,7 +248,7 @@ async function createVariantService(dataSource, productId, variantData) {
     throw new Error(`Ya existe una variante con tamaño "${variantData.size}" y color "${variantData.color}".`);
   }
 
-  // Crear la nueva variante
+
   const newVariant = variantRepo.create({
     size: variantData.size,
     color: variantData.color,

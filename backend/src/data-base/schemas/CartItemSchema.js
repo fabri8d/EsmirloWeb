@@ -8,7 +8,7 @@ module.exports = new EntitySchema({
   columns: {
     id: { primary: true, type: "int", generated: true },
     quantity: { type: "int" },
-    price: { type: "decimal" } // precio en el momento del agregado
+    price: { type: "decimal" }
   },
   relations: {
     cart: {

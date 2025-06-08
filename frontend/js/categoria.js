@@ -1,12 +1,13 @@
 import { checkSession, logout } from "../utils/sessions.js";
-import { updateCartCount } from "../utils/carts.js";
+import { contadorCarrito } from "../utils/carts.js";
 import { loadCategories } from "../utils/categories.js";
+import { redireccionProductos } from "../utils/products.js";
 const token = localStorage.getItem("token");
 
 document.addEventListener('DOMContentLoaded', () => {
   if (!checkSession()) return;
     cargarProductos()
-    updateCartCount();
+    contadorCarrito();
     loadCategories();
 });
 
@@ -17,7 +18,7 @@ async function cargarProductos() {
     
     if (!categoria) {
       document.getElementById("titulo-categoria").textContent = "Categoría no especificada";
-      return;  // Salir para no hacer fetch con categoría indefinida
+      return;
     }
     
     document.getElementById("titulo-categoria").textContent = `Categoría: ${categoria}`;
@@ -44,7 +45,7 @@ async function cargarProductos() {
               <div class="card-body text-center">
                 <h5 class="card-title">${p.name}</h5>
                 <p class="card-text text-success fw-bold">$${p.price}</p>
-                <a href="#" class="btn btn-primary btn-sm btn-agregar-carrito">Ver detalle</a>
+                <a onClick="redireccionProductos('${p.id}')" class="btn btn-primary btn-sm">Ver detalle</a>
               </div>
             </div>
           `;
@@ -56,5 +57,5 @@ async function cargarProductos() {
     }
 }
 
-
-window.logout = logout 
+window.logout = logout;
+window.redireccionProductos = redireccionProductos;

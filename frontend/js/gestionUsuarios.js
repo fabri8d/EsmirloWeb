@@ -25,7 +25,7 @@ async function cargarUsuarios() {
 
 function llenarTablaUsuarios(users) {
   const tbody = document.querySelector("#usersTable tbody");
-  tbody.innerHTML = ""; // limpiar tabla
+  tbody.innerHTML = ""; 
 
   users.forEach(user => {
     const tr = document.createElement("tr");

@@ -29,7 +29,7 @@ async function updateOrderStatus(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
     const orderId = req.params.id;
-    const newStatus = req.body.status; // Assuming status is sent in the request body
+    const newStatus = req.body.status; 
 
     const result = await updateOrderStatusService(dataSource, orderId, newStatus);
     res.json(result);
@@ -63,7 +63,7 @@ async function getAllOrders(req, res) {
 async function getOrdersByUserId(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
-    const userId = req.user.id; // Assuming user ID is available in req.user
+    const userId = req.user.id; 
 
     const orders = await getOrdersByUserIdService(dataSource, userId);
     res.json(orders);
@@ -75,7 +75,7 @@ async function getOrdersByUserId(req, res) {
 async function getOrdersByUsername(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
-    const username = req.user.username; // Assuming user ID is available in req.user
+    const username = req.user.username; 
 
     const orders = await getOrdersByUsernameService(dataSource, username);
     res.json(orders);

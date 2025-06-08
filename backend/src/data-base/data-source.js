@@ -11,9 +11,9 @@ const AppDataSource = new DataSource({
   type: "postgres",
   host: "localhost",
   port: 5432,
-  username: "postgres",        // Ajusta según tu config
-  password: "usuario123",      // Ajusta según tu config
-  database: "bd-web",          // Ajusta según tu config
+  username: "postgres",        
+  password: "usuario123",      
+  database: "bd-web",          
   synchronize: true,
   logging: false,
   entities: [ProductSchema, ProductVariantSchema, UserSchema, CategorySchema, CartItemSchema, CartSchema, OrderSchema, OrderItemSchema],

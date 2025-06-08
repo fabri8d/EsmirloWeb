@@ -9,7 +9,7 @@ function crearCuenta() {
 
 
 const form = document.getElementById("registerForm");
-const responseBox = document.getElementById("response");
+
 
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -36,12 +36,6 @@ form.addEventListener("submit", async (event) => {
             json = { error: "Respuesta no es JSON válida" };
         }
 
-        if (!res.ok) {
-            responseBox.textContent = "Error: " + (json.error || res.statusText);
-            return;
-        }
-
-        responseBox.textContent = JSON.stringify(json, null, 2);
     } catch (error) {
         responseBox.textContent = "Error en la petición: " + error;
     }

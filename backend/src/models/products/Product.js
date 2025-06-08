@@ -5,7 +5,7 @@ class Product {
     this.category = category;
     this.price = price;
     this.imageUrl = imageUrl;
-    this.variants;// mantener arreglo para relación uno a muchos
+    this.variants;
   }
 }
 

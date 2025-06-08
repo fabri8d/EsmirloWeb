@@ -1,5 +1,5 @@
 function irPrincipal(){
-    window.location.href = "../pages/principal.html"; // ✅ Ruta absoluta desde el servidor
+    window.location.href = "../pages/principal.html";
 }
 
 document.getElementById("loginForm").addEventListener("submit", async e => {

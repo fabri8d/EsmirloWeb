@@ -1,24 +1,19 @@
-const ProductVariant = require("../models/products/ProductVariant.js");
-
 async function addProductToCartService(dataSource, userId, productVariantId, quantity) {
   const cartRepo = dataSource.getRepository("Cart");
   const cartItemRepo = dataSource.getRepository("CartItem");
   const productVariantRepo = dataSource.getRepository("ProductVariant");
-  const productRepo = dataSource.getRepository("Product");
 
-  // Find or create the user's cart
   let cart = await cartRepo.findOne({
     where: { user: { id: userId }, status: "open" },
-    relations: ["items", "items.productVariant"]
   });
 
   if (!cart) {
-    cart = new (require("../models/orders/Cart.js"))();
+    const Cart = require("../models/orders/Cart.js");
+    cart = new Cart();
     cart.user = { id: userId };
     await cartRepo.save(cart);
   }
 
-  // Find the product variant with product relation
   const productVariant = await productVariantRepo.findOne({
     where: { id: productVariantId },
     relations: ["product"]
@@ -28,32 +23,34 @@ async function addProductToCartService(dataSource, userId, productVariantId, qua
     throw new Error("Product variant not found.");
   }
 
-  // Obtener precio desde el producto padre
   const price = productVariant.product.price;
   if (price == null) {
     throw new Error("Product price not found.");
   }
 
-  // Check if the item already exists in the cart
-  let cartItem = cart.items.find(item => item.productVariant.id === productVariantId);
+  let cartItem = await cartItemRepo.findOne({
+    where: {
+      cart: { id: cart.id },
+      productVariant: { id: productVariantId }
+    },
+    relations: ["productVariant"]
+  });
 
   if (cartItem) {
-    // Update quantity and price
     cartItem.quantity += quantity;
     cartItem.price = price;
   } else {
-    // Create a new CartItem
-    cartItem = new (require("../models/orders/CartItem.js"))(
-      null, quantity, price, cart, productVariant
-    );
-    cart.items.push(cartItem);
+    const CartItem = require("../models/orders/CartItem.js");
+    cartItem = new CartItem(null, quantity, price, cart, productVariant);
   }
 
-  // Save the updated cart and items
   await cartItemRepo.save(cartItem);
-  await cartRepo.save(cart);
 
-  // Limpiar la estructura para evitar referencias circulares
+  cart = await cartRepo.findOne({
+    where: { id: cart.id },
+    relations: ["items", "items.productVariant"]
+  });
+
   const cleanCart = {
     ...cart,
     items: cart.items.map(item => ({
@@ -61,39 +58,39 @@ async function addProductToCartService(dataSource, userId, productVariantId, qua
       quantity: item.quantity,
       price: item.price,
       productVariant: item.productVariant,
-      // quitamos 'cart' para evitar ciclo
     }))
   };
 
   return cleanCart;
 }
 
+
 async function getCartService(dataSource, userId) {
   const cartRepo = dataSource.getRepository("Cart");
 
-  // Buscar carrito abierto del usuario con relaciones completas
   let cart = await cartRepo.findOne({
     where: { user: { id: userId }, status: "open" },
     relations: [
       "items",
       "items.productVariant",
-      "items.productVariant.product"
+      "items.productVariant.product",
+      "items.productVariant.product.variants" 
     ]
   });
 
   if (!cart) {
-    // Si no tiene carrito abierto, crear uno nuevo
+
     cart = new (require("../models/orders/Cart.js"))();
     cart.user = { id: userId };
     await cartRepo.save(cart);
 
-    // Cargar carrito vacío con relaciones para evitar errores frontend
     cart = await cartRepo.findOne({
       where: { id: cart.id },
       relations: [
         "items",
         "items.productVariant",
-        "items.productVariant.product"
+        "items.productVariant.product",
+        "items.productVariant.product.variants" 
       ]
     });
   }
@@ -102,9 +99,10 @@ async function getCartService(dataSource, userId) {
 }
 
 
-async function updateCartItemService(dataSource, userId, cartItemId, quantity) {
+async function updateCartItemService(dataSource, userId, cartItemId, quantity, size) {
   const cartRepo = dataSource.getRepository("Cart");
   const cartItemRepo = dataSource.getRepository("CartItem");
+  const productVariantRepo = dataSource.getRepository("ProductVariant");
 
   const cart = await cartRepo.findOne({
     where: { user: { id: userId }, status: "open" },
@@ -117,18 +115,38 @@ async function updateCartItemService(dataSource, userId, cartItemId, quantity) {
 
   const cartItem = await cartItemRepo.findOne({
     where: { id: cartItemId, cart: { id: cart.id } },
-    relations: ["productVariant"]
+    relations: ["productVariant", "productVariant.product"]
   });
 
   if (!cartItem) {
     throw new Error("Cart item not found.");
   }
+  console.log("Producto ID:", cartItem.productVariant.product.id);
+  console.log("Color actual variante:", cartItem.productVariant.color);
+  console.log("Tamaño solicitado:", size);
 
+  const nuevoVariant = await productVariantRepo.findOne({
+    where: {
+      product: { id: cartItem.productVariant.product.id },
+      color: cartItem.productVariant.color,
+      size: size,
+
+    }
+  });
+
+  if (!nuevoVariant) {
+    throw new Error("No existe variante con el tamaño y color solicitado.", cartItem.productVariant.color);
+  }
+
+  // Actualizar el item del carrito con la nueva variante y cantidad
+  cartItem.productVariant = nuevoVariant;
   cartItem.quantity = quantity;
-  cartItem.price = cartItem.productVariant.price;
+  cartItem.price = nuevoVariant.price;
 
+  // Guardar cambios
   return await cartItemRepo.save(cartItem);
 }
+
 async function removeCartItemService(dataSource, userId, cartItemId) {
   const cartRepo = dataSource.getRepository("Cart");
   const cartItemRepo = dataSource.getRepository("CartItem");
@@ -189,11 +207,26 @@ async function clearCartService(dataSource, userId) {
 
   return await cartRepo.save(cart);
 }
+
+async function getItemCountService(dataSource, userId) {
+  const cartRepo = dataSource.getRepository("Cart");
+  const cart = await cartRepo.findOne({
+    where: { user: { id: userId }, status: "open" },
+    relations: ["items"]
+  });
+
+  if (!cart) {
+    return 0; 
+  }
+  const totalCount = cart.items.reduce((acc, item) => acc + item.quantity, 0);
+  return totalCount;
+}
 module.exports = {
   addProductToCartService,
   getCartService,
   updateCartItemService,
   removeCartItemService,
   clearCartService,
-  updateCartStatusService
+  updateCartStatusService,
+  getItemCountService
 };

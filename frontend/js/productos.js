@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   loadCategoriesOnCreate();
-  agregarVariante(); // Agrega una variante por defecto al cargar
+  agregarVariante(); 
 });
 
 document.getElementById("createCategory").addEventListener("click", async e => {
@@ -61,13 +61,11 @@ document.getElementById("product-form").addEventListener("submit", async e => {
   formData.append("category", categorySelect.value);
   formData.append("price", parseFloat(document.getElementById("price").value));
 
-  // Imagen del input file
   const imageFileInput = document.getElementById("imageFile");
   if (imageFileInput.files.length > 0) {
-    formData.append("image", imageFileInput.files[0]);  // Cambiado aquí a "image"
+    formData.append("image", imageFileInput.files[0]);  
   }
 
-  // Variantes en JSON dentro de FormData (stringify)
   const variants = [...variantsContainer.children].map(div => ({
     color: div.querySelector(".variant-color").value.trim(),
     size: div.querySelector(".variant-size").value.trim(),
@@ -81,7 +79,6 @@ document.getElementById("product-form").addEventListener("submit", async e => {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`
-        // NO ponemos Content-Type aquí, fetch lo maneja para multipart/form-data
       },
       body: formData,
     });

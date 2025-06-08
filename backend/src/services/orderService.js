@@ -14,7 +14,7 @@ async function createOrderService(dataSource, orderData) {
   const orderItemRepo = dataSource.getRepository(OrderItem);
   const productVariantRepo = dataSource.getRepository(ProductVariant);
 
-  // Buscar el carrito con sus items y usuario
+
   const cart = await cartRepo.findOne({
     where: { id: orderData.cartId, status: "open" },
     relations: ["items", "user"]
@@ -28,13 +28,11 @@ async function createOrderService(dataSource, orderData) {
     throw new Error("Carrito vacío.");
   }
 
-  // Obtener ítems del carrito con relaciones completas
   const cartItems = await cartItemRepo.find({
     where: { cart: { id: cart.id } },
     relations: ["productVariant", "productVariant.product", "productVariant.product.category"]
   });
 
-  // Verificar stock
   for (const item of cartItems) {
     const variant = item.productVariant;
     if (variant.stock < item.quantity) {
@@ -44,12 +42,11 @@ async function createOrderService(dataSource, orderData) {
 
   const user = cart.user;
 
-  // Calcular el total
   const totalAmount = cart.items.reduce((sum, item) => {
     return sum + parseFloat(item.price * item.quantity);
   }, 0);
 
-  // Crear la orden sin ítems aún
+
   const order = orderRepo.create({
     user: user,
     status: "pending",
@@ -66,7 +63,6 @@ async function createOrderService(dataSource, orderData) {
 
   const savedOrder = await orderRepo.save(order);
 
-  // Crear los items de la orden
   const orderItems = cartItems.map(cartItem =>
     orderItemRepo.create({
       productId: cartItem.productVariant.product.id,
@@ -85,14 +81,12 @@ async function createOrderService(dataSource, orderData) {
     })
   );
 
-  // Guardar los ítems de la orden
   await orderItemRepo.save(orderItems);
 
-  // Descontar stock
   for (const item of cartItems) {
     const variant = item.productVariant;
     variant.stock -= item.quantity;
-
+    console.log(`Descontando stock de ${variant.product.name} (${variant.color}, ${variant.size}): ${item.quantity} unidades`);
     if (variant.stock < 0) {
       throw new Error(`Error interno: stock negativo para ${variant.product.name} (${variant.color}, ${variant.size})`);
     }
@@ -100,11 +94,9 @@ async function createOrderService(dataSource, orderData) {
     await productVariantRepo.save(variant);
   }
 
-  // Marcar carrito como ordenado
   cart.status = "ordered";
   await cartRepo.save(cart);
 
-  // Retornar la orden con ítems
   savedOrder.items = orderItems;
   return savedOrder;
 }
@@ -114,7 +106,6 @@ async function createOrderService(dataSource, orderData) {
 async function getOrderByIdService(dataSource, orderId) {
   const orderRepo = dataSource.getRepository(Order);
 
-  // Buscar la orden por ID con sus items
   const order = await orderRepo.findOne({
     where: { id: orderId },
     relations: ["items", "user"]
@@ -130,7 +121,6 @@ async function getOrderByIdService(dataSource, orderId) {
 async function getOrdersByUserIdService(dataSource, userId) {
   const orderRepo = dataSource.getRepository(Order);
 
-  // Buscar las órdenes del usuario con sus items
   const orders = await orderRepo.find({
     where: { user: { id: userId } },
     relations: ["items", "user"]
@@ -146,7 +136,6 @@ async function getOrdersByUserIdService(dataSource, userId) {
 async function cancelOrderService(dataSource, orderId) {
   const orderRepo = dataSource.getRepository(Order);
 
-  // Buscar la orden por ID
   const order = await orderRepo.findOne({
     where: { id: orderId },
     relations: ["items"]
@@ -156,10 +145,8 @@ async function cancelOrderService(dataSource, orderId) {
     throw new Error("Orden no encontrada.");
   }
 
-  // Cambiar el estado de la orden a "cancelled"
   order.status = "cancelled";
 
-  // Guardar los cambios
   await orderRepo.save(order);
 
   return {
@@ -171,7 +158,6 @@ async function cancelOrderService(dataSource, orderId) {
 async function updateOrderStatusService(dataSource, orderId, newStatus) {
   const orderRepo = dataSource.getRepository(Order);
 
-  // Buscar la orden por ID
   const order = await orderRepo.findOne({
     where: { id: orderId },
     relations: ["items"]
@@ -181,16 +167,13 @@ async function updateOrderStatusService(dataSource, orderId, newStatus) {
     throw new Error("Orden no encontrada.");
   }
 
-  // Validar el nuevo estado
   const validStatuses = ["pending", "paid", "shipped", "completed", "cancelled"];
   if (!validStatuses.includes(newStatus)) {
     throw new Error("Estado inválido.");
   }
 
-  // Actualizar el estado de la orden
   order.status = newStatus;
 
-  // Guardar los cambios
   await orderRepo.save(order);
 
   return {
@@ -203,7 +186,6 @@ async function updateOrderStatusService(dataSource, orderId, newStatus) {
 async function getAllOrdersService(dataSource) {
   const orderRepo = dataSource.getRepository(Order);
 
-  // Obtener todas las órdenes con sus items
   const orders = await orderRepo.find({
     relations: ["items", "user"]
   });
@@ -221,7 +203,7 @@ async function getOrdersByUsernameService(dataSource, username) {
   const user = await userRepo.findOne({
     where: { username: username }
   });
-  // Buscar las órdenes del usuario con sus items
+
   const orders = await orderRepo.find({
     where: { user: { id: user.id } },
     relations: ["items", "user"]
