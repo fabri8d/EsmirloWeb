@@ -2,7 +2,8 @@ async function addProductToCartService(dataSource, userId, productVariantId, qua
   const cartRepo = dataSource.getRepository("Cart");
   const cartItemRepo = dataSource.getRepository("CartItem");
   const productVariantRepo = dataSource.getRepository("ProductVariant");
-
+  console.log("User ID:", userId);
+  console.log("Product Variant ID:", productVariantId);
   let cart = await cartRepo.findOne({
     where: { user: { id: userId }, status: "open" },
   });

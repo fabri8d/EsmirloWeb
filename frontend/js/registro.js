@@ -28,12 +28,9 @@ form.addEventListener("submit", async (event) => {
             body: JSON.stringify(payload),
         });
 
-        const text = await res.text();
-        let json;
-        try {
-            json = text ? JSON.parse(text) : {};
-        } catch (e) {
-            json = { error: "Respuesta no es JSON válida" };
+
+        if (res.ok) {
+            window.location.href = "inicio.html";
         }
 
     } catch (error) {

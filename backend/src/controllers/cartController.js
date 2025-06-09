@@ -8,14 +8,14 @@ const { addProductToCartService,
 } = require('../services/cartService');
 
 
- async function addProductToCart(req, res){
+async function addProductToCart(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
     const userId = req.user.id; // Asegúrate de que el ID del usuario esté disponible en req.user
-    const productId = req.body.productId;
+    const variantId = req.body.variantId;
     const quantity = req.body.quantity || 1; // Si no se proporciona cantidad, usar 1
 
-    const result = await addProductToCartService(dataSource, userId, productId, quantity);
+    const result = await addProductToCartService(dataSource, userId, variantId, quantity);
     res.status(201).json(result);
   } catch (err) {
     console.error("Error al agregar producto al carrito:", err);
@@ -38,9 +38,9 @@ async function getCart(req, res) {
 async function updateCartStatus(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
-    const userId = req.user.id; // Asegúrate de que el ID del usuario esté disponible en req.user
+    const userId = req.user.id;
     const cartId = req.params.id;
-    const newStatus = req.body.status; // Asumiendo que el nuevo estado se envía en el cuerpo de la solicitud
+    const newStatus = req.body.status; 
 
     const result = await updateCartStatusService(dataSource, cartId, newStatus);
     res.json(result);
@@ -53,7 +53,7 @@ async function updateCartStatus(req, res) {
 async function updateCartItem(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
-    const userId = req.user.id; 
+    const userId = req.user.id;
     const cartItemId = req.params.id;
     const quantity = req.body.quantity;
     const size = req.body.size;
@@ -83,7 +83,7 @@ async function removeCartItem(req, res) {
 async function clearCart(req, res) {
   try {
     const dataSource = req.app.get('dataSource');
-    const userId = req.user.id; 
+    const userId = req.user.id;
 
     const result = await clearCartService(dataSource, userId);
     res.json(result);

@@ -128,8 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         alert("Cantidad inválida o supera el stock disponible.");
         return;
       }
-
-      agregarAlCarrito(variant._id, cantidad);
+      agregarAlCarrito(variant.id, cantidad);
     });
 
   } catch (error) {
@@ -146,7 +145,7 @@ async function agregarAlCarrito(variantId, quantity) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ productVariantId: variantId, quantity })
+      body: JSON.stringify({ variantId, quantity })
     });
 
     if (!res.ok) {
@@ -154,9 +153,7 @@ async function agregarAlCarrito(variantId, quantity) {
       alert("Error al agregar al carrito: " + (errorData.message || res.statusText));
       return;
     }
-
-    alert("Producto añadido al carrito");
-
+    contadorCarrito()
   } catch (error) {
     console.error(error);
     alert("Error al agregar al carrito");

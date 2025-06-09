@@ -104,6 +104,7 @@ async function guardarCambios(id) {
       body: JSON.stringify({ quantity: nuevaCantidad, size: nuevoTalle })
     });
     cargarCarrito();
+    contadorCarrito();
   } catch (error) {
     console.error("Error al guardar cambios:", error);
   }
@@ -184,6 +185,8 @@ document.getElementById("confirmar-compra").addEventListener("click", async () =
     });
 
     cargarCarrito();
+    cargarPedidosUsuario();
+    contadorCarrito();
     document.getElementById('carrito-compra').classList.add('d-none');
     document.getElementById('resumen-compra').classList.remove('d-none');
   }
