@@ -1,3 +1,4 @@
+const { sendEmailOrderUser, sendEmailOrderAdmin } = require("./emailService.js");
 const Product = require("../models/products/Product.js");
 const ProductVariant = require("../models/products/ProductVariant.js");
 const Category = require("../models/products/Category.js");
@@ -6,6 +7,7 @@ const Order = require("../models/orders/Order.js");
 const Cart = require("../models/orders/Cart.js");
 const CartItem = require("../models/orders/CartItem.js");
 const User = require("../models/users/User.js");
+
 
 async function createOrderService(dataSource, orderData) {
   const cartRepo = dataSource.getRepository(Cart);
@@ -76,17 +78,15 @@ async function createOrderService(dataSource, orderData) {
       variantQuantity: cartItem.quantity,
       variantSize: cartItem.productVariant.size,
       variantColor: cartItem.productVariant.color,
-      price: cartItem.price,
+      price: cartItem.productVariant.product.price * cartItem.quantity,
       order: savedOrder
     })
   );
-
   await orderItemRepo.save(orderItems);
 
   for (const item of cartItems) {
     const variant = item.productVariant;
     variant.stock -= item.quantity;
-    console.log(`Descontando stock de ${variant.product.name} (${variant.color}, ${variant.size}): ${item.quantity} unidades`);
     if (variant.stock < 0) {
       throw new Error(`Error interno: stock negativo para ${variant.product.name} (${variant.color}, ${variant.size})`);
     }
@@ -98,6 +98,10 @@ async function createOrderService(dataSource, orderData) {
   await cartRepo.save(cart);
 
   savedOrder.items = orderItems;
+
+  sendEmailOrderUser(user.email, savedOrder);
+  sendEmailOrderAdmin("leandrobiondi12@gmail.com", savedOrder);
+
   return savedOrder;
 }
 

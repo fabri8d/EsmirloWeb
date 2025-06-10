@@ -126,12 +126,24 @@ async function changePriceProductService(dataSource, productId, newPrice) {
 }
 
 
-async function getProductsService(dataSource) {
+async function getProductsService(dataSource, page = 1, limit = 10) {
   const productRepo = dataSource.getRepository(Product);
-  return await productRepo.find({
-    relations: ["variants"]
+
+  const [products, total] = await productRepo.findAndCount({
+    relations: ["variants"],
+    skip: (page - 1) * limit,
+    take: limit,
+    order: { id: "DESC" },
   });
+
+  return {
+    data: products,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
 }
+
 
 async function getProductByIDService(dataSource, productId) {
   const productRepo = dataSource.getRepository(Product);

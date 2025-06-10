@@ -52,8 +52,11 @@ async function changePriceProduct(req, res) {
 async function getProducts(req, res) {
   try {
     const dataSource = req.app.get("dataSource");
-    const products = await getProductsService(dataSource);
-    res.json(products);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const result = await getProductsService(dataSource, page, limit);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
