@@ -26,3 +26,34 @@ export async function loadCategories() {
         console.error("Error al cargar categorías:", err.message);
     }
 }
+export async function showCategories() {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch("http://localhost:3000/categories/getCategories", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) throw new Error("Error al obtener categorías");
+
+    const categories = await res.json();
+    const select = document.getElementById("filtro-categoria");
+
+    // Agrega opción vacía al inicio
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "-- Todas las categorías --";
+    select.appendChild(emptyOption);
+
+    categories.forEach(cat => {
+      const option = document.createElement("option");
+      option.value = cat.name;
+      option.textContent = cat.name;
+      select.appendChild(option);
+    });
+
+  } catch (err) {
+    console.error("Error al cargar categorías:", err.message);
+  }
+}

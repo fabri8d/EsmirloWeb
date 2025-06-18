@@ -1,5 +1,5 @@
 const cloudinary = require("../cloudinary.js"); // ajusta el path según tu estructura
-const fs = require( 'fs/promises');
+const fs = require('fs/promises');
 const Product = require("../models/products/Product.js");
 const ProductVariant = require("../models/products/ProductVariant.js");
 const Category = require("../models/products/Category.js");
@@ -166,27 +166,25 @@ async function getProductsByNameService(dataSource, productName) {
   return products;
 }
 
-async function getProductsByCategoryService(dataSource, categoryName) {
+async function getProductsByCategoryService(dataSource, categoryName, page = 1, limit = 6) {
   const productRepo = dataSource.getRepository(Product);
   const categoryRepo = dataSource.getRepository(Category);
   const category = await categoryRepo.findOne({
-    where: {
-      name: categoryName 
-    },
+    where: { name: categoryName },
   });
-  if (!category) {
-    throw new Error("No existe la categoria" + categoryName);
-  }
-  const products = await productRepo.find({
-    where: {
-      category: { id: category.id }
-    },
+
+  if (!category) throw new Error("No existe la categoría " + categoryName);
+
+  const [products, total] = await productRepo.findAndCount({
+    where: { category: { id: category.id } },
+    skip: (page - 1) * limit,
+    take: limit,
+    relations: ["category"],
   });
-  if (!products || products.length === 0) {
-    throw new Error("No existen productos en la categoría " + category.name);
-  }
-  return products;
+
+  return { products, total };
 }
+
 
 
 async function getVariantsByProductService(dataSource, productId) {
@@ -197,7 +195,7 @@ async function getVariantsByProductService(dataSource, productId) {
   if (!variants) throw new Error("No existen variantes del producto " + productData.name);
   return await variants
 }
-async function updateVariantStockService(dataSource, variantId ,variantData) {
+async function updateVariantStockService(dataSource, variantId, variantData) {
   const variantRepo = dataSource.getRepository(ProductVariant);
   const variant = await variantRepo.findOne({
     where: { id: variantId },
@@ -217,7 +215,7 @@ async function deleteVariantService(dataSource, variantId) {
   const variantRepo = dataSource.getRepository(ProductVariant);
   const variant = await variantRepo.findOne({
     where: { id: variantId },
-     
+
   });
   if (!variant) throw new Error("No existe la variante con ID " + variantId);
 
@@ -272,6 +270,36 @@ async function createVariantService(dataSource, productId, variantData) {
 
   return newVariant;
 }
+async function getProductsFilteredService(dataSource, filters) {
+  const productRepo = dataSource.getRepository(Product);
+
+  const { name, category, page = 1, limit = 10 } = filters;
+
+  let query = productRepo.createQueryBuilder("product")
+    .leftJoinAndSelect("product.variants", "variants")
+    .leftJoinAndSelect("product.category", "category");
+
+  if (name) {
+    query = query.andWhere("product.name ILIKE :name", { name: `%${name}%` });
+  }
+
+  if (category) {
+    query = query.andWhere("category.name = :category", { category });
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [products, total] = await query
+    .skip(skip)
+    .take(limit)
+    .getManyAndCount();
+
+  return {
+    products,
+    total
+  };
+}
+
 module.exports = {
   createProductService,
   purchaseVariantService,
@@ -284,6 +312,7 @@ module.exports = {
   updateVariantStockService,
   deleteVariantService,
   deleteProductService,
-  createVariantService
+  createVariantService,
+  getProductsFilteredService
 };
 

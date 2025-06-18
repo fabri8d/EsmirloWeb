@@ -100,7 +100,12 @@ async function createOrderService(dataSource, orderData) {
   savedOrder.items = orderItems;
 
   sendEmailOrderUser(user.email, savedOrder);
-  sendEmailOrderAdmin("leandrobiondi12@gmail.com", savedOrder);
+  const userRepo = dataSource.getRepository(User);
+  const adminUsers = await userRepo.find({ where: { role: "admin" } });
+  const adminEmails = adminUsers.map(admin => admin.email);
+
+  sendEmailOrderAdmin('leandrobiondi12@gmail.com'/*adminEmails*/, savedOrder);
+
 
   return savedOrder;
 }
@@ -219,6 +224,35 @@ async function getOrdersByUsernameService(dataSource, username) {
 
   return orders;
 }
+async function getOrdersFilteredService(dataSource, filters) {
+  const orderRepo = dataSource.getRepository(Order);
+  const { status, startDate, endDate, username, page = 1, limit = 10 } = filters;
+
+  let query = orderRepo.createQueryBuilder("order")
+    .leftJoinAndSelect("order.items", "items")
+    .leftJoinAndSelect("order.user", "user");
+
+  if (status) query = query.andWhere("order.status = :status", { status });
+  if (username) query = query.andWhere("user.username LIKE :username", { username: `%${username}%` });
+  if (startDate) query = query.andWhere("order.createdAt >= :startDate", { startDate: new Date(startDate).toISOString() });
+  if (endDate) {
+    const end = new Date(endDate);
+    end.setDate(end.getDate() + 1);
+    query = query.andWhere("order.createdAt < :endDate", { endDate: end.toISOString() });
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [orders, total] = await query
+    .skip(skip)
+    .take(limit)
+    .getManyAndCount();
+
+  return { orders, total };
+}
+
+
+
 module.exports = {
   createOrderService,
   getOrderByIdService,
@@ -226,5 +260,6 @@ module.exports = {
   cancelOrderService,
   updateOrderStatusService,
   getAllOrdersService,
-  getOrdersByUsernameService
+  getOrdersByUsernameService,
+  getOrdersFilteredService
 };

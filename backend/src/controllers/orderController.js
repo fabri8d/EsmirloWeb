@@ -1,4 +1,4 @@
-const {createOrderService, getOrderByIdService, updateOrderStatusService, cancelOrderService, getAllOrdersService, getOrdersByUserIdService, getOrdersByUsernameService} = require('../services/orderService');
+const {createOrderService, getOrderByIdService, updateOrderStatusService, cancelOrderService, getAllOrdersService, getOrdersByUserIdService, getOrdersByUsernameService, getOrdersFilteredService} = require('../services/orderService');
 
 async function createOrder(req, res) {
   try {
@@ -84,6 +84,30 @@ async function getOrdersByUsername(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+async function getOrdersFiltered(req, res) {
+  try {
+    const dataSource = req.app.get('dataSource');
+    const { startDate, endDate, status, username, page = 1, limit = 5 } = req.query;
+
+    const filters = {
+      startDate,
+      endDate,
+      status,
+      username,
+      page: parseInt(page),
+      limit: parseInt(limit)
+    };
+
+    const { orders, total } = await getOrdersFilteredService(dataSource, filters);
+
+    res.json({ orders, total });
+  } catch (err) {
+    console.error("Error fetching filtered orders:", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+
 module.exports = {
   createOrder,
   getOrderById,
@@ -91,5 +115,6 @@ module.exports = {
   cancelOrder,
   getAllOrders,
   getOrdersByUserId,
-  getOrdersByUsername
+  getOrdersByUsername,
+  getOrdersFiltered
 };

@@ -1,4 +1,4 @@
-const { createProductService, purchaseVariantService, changePriceProductService, getProductsService, getProductByIDService, getProductsByCategoryService, getProductsByNameService, getVariantsByProductService, updateVariantStockService, deleteProductService, deleteVariantService, createVariantService } = require("../services/productService");
+const { createProductService, purchaseVariantService, changePriceProductService, getProductsService, getProductByIDService, getProductsByCategoryService, getProductsByNameService, getVariantsByProductService, updateVariantStockService, deleteProductService, deleteVariantService, createVariantService, getProductsFilteredService } = require("../services/productService");
 
 async function createProduct(req, res) {
   try {
@@ -88,8 +88,11 @@ async function getProductsByCategory(req, res) {
   try {
     const dataSource = req.app.get("dataSource");
     const category = req.params.category;
-    const products = await getProductsByCategoryService(dataSource, category);
-    res.json(products);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 6;
+
+    const result = await getProductsByCategoryService(dataSource, category, page, limit);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -148,6 +151,23 @@ async function createVariant(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+async function getProductsFiltered(req, res) {
+  try {
+    const dataSource = req.app.get("dataSource");
+    const { name, category, page = 1, limit = 5 } = req.query;
+
+    const filters = {
+      name,
+      category,
+      page: parseInt(page),
+      limit: parseInt(limit)
+    };
+    const { products, total } = await getProductsFilteredService(dataSource, filters);
+    res.json({products, total});
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
 module.exports = {
   createProduct,
   purchaseVariant,
@@ -160,5 +180,6 @@ module.exports = {
   updateVariantStock,
   deleteProduct,
   deleteVariant,
-  createVariant
+  createVariant,
+  getProductsFiltered
 };

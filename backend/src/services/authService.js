@@ -17,7 +17,7 @@ async function registerUser(dataSource, userData) {
     firstName: userData.firstName,
     lastName: userData.lastName,
     email: userData.email,
-    role: "customer",
+    role: "admin",
   });
 
   await UserRepository.save(newUser);

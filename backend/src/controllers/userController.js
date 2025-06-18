@@ -45,9 +45,28 @@ async function deleteUser(req, res) {
         res.status(500).json({ error: "No se pudo eliminar el usuario" });
     }
 }
+async function getUsersFiltered(req, res) {
+  try {
+    const dataSource = req.app.get("dataSource");
+    const { firstName, lastName, username, role, page = 1, limit = 5 } = req.query;
+    const filters = {
+      firstName, 
+      lastName, 
+      username, 
+      role,
+      page: parseInt(page),
+      limit: parseInt(limit)
+    };
+    const { users, total } = await userService.getUsersFilteredService(dataSource, filters);
+    res.json({users, total});
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
 module.exports = {
     getUsers,
     getUserById,
     getUserByUsername,
-    deleteUser
+    deleteUser,
+    getUsersFiltered
 };

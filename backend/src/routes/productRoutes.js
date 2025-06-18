@@ -1,7 +1,7 @@
 const { upload } = require("../middlewares/multerMiddleware");
 const express = require("express");
 const router = express.Router();
-const { createProduct, purchaseVariant, changePriceProduct, getProducts,getVariantsByProduct, getProductsByCategory,getProductsByName,getProductByID, updateVariantStock, deleteProduct, deleteVariant, createVariant } = require("../controllers/productController");
+const { createProduct, purchaseVariant, changePriceProduct, getProducts,getVariantsByProduct, getProductsByCategory,getProductsByName,getProductByID, updateVariantStock, deleteProduct, deleteVariant, createVariant, getProductsFiltered } = require("../controllers/productController");
 
 // Importamos los middlewares
 const { authenticateToken, authorizeAdmin, } = require("../middlewares/authMiddleware");
@@ -31,4 +31,5 @@ router.put("/updateVariantStock/:id", authenticateToken, authorizeAdmin, updateV
 router.delete("/deleteVariant/:id", authenticateToken, authorizeAdmin, deleteVariant);
 router.delete("/deleteProduct/:id", authenticateToken, authorizeAdmin, deleteProduct);
 router.post("/createVariant",authenticateToken, authorizeAdmin, createVariant)
+router.get('/getProductsFiltered', authenticateToken, authorizeAdmin, getProductsFiltered);
 module.exports = router;

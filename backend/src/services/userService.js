@@ -50,10 +50,45 @@ async function deleteUserService(dataSource, userId) {
         throw new Error("Could not delete user");
     }
 }
+async function getUsersFilteredService(dataSource, filters) {
+    const userRepo = dataSource.getRepository(User);
+    const { firstName, lastName, username, role, page = 1, limit = 10 } = filters;
+
+    let query = userRepo.createQueryBuilder("user");
+
+    if (firstName) {
+        query = query.andWhere("user.firstName ILIKE :firstName", { firstName: `%${firstName}%` });
+    }
+    if (lastName) {
+        query = query.andWhere("user.lastName ILIKE :lastName", { lastName: `%${lastName}%` });
+    }
+    if (username) {
+        query = query.andWhere("user.username ILIKE :username", { username: `%${username}%` });
+    }
+    if (role) {
+        query = query.andWhere("user.role = :role", { role });
+    }
+
+
+
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await query
+        .skip(skip)
+        .take(limit)
+        .getManyAndCount();
+
+    return {
+        users,
+        total
+    };
+
+}
 
 module.exports = {
-    getUsersService, 
+    getUsersService,
     getUserByIdService,
     getUserByUsernameService,
-    deleteUserService
+    deleteUserService,
+    getUsersFilteredService
 };

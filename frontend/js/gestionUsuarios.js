@@ -1,31 +1,67 @@
 import { checkSession, logout } from "../utils/sessions.js";
 const token = localStorage.getItem("token");
+let pagina = 1;
+const limite = 5;
 document.addEventListener("DOMContentLoaded", () => {
-    if (!checkSession()) return;
-    cargarUsuarios();
+  if (!checkSession()) return;
+  aplicarFiltros(1);
+  document.getElementById("filtro-nombre").addEventListener("change", (e) => aplicarFiltros(1));
+  document.getElementById("filtro-apellido").addEventListener("change", (e) => aplicarFiltros(1));
+  document.getElementById("filtro-username").addEventListener("change", (e) => aplicarFiltros(1));
+  document.getElementById("filtro-rol").addEventListener("change", (e) => aplicarFiltros(1));
+  document.getElementById("btnAnterior").addEventListener("click", () => {
+    if (pagina > 1) aplicarFiltros(pagina - 1);
+  });
+
+  document.getElementById("btnSiguiente").addEventListener("click", () => {
+    aplicarFiltros(pagina + 1);
+  });
 });
+async function aplicarFiltros(nuevaPagina = 1) {
+  pagina = nuevaPagina;
 
-async function cargarUsuarios() {
-    try {
-        const response = await fetch("http://localhost:3000/users/getUsers", {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+  const nombreSeleccionado = document.getElementById("filtro-nombre").value;
+  const apellidoSeleccionado = document.getElementById("filtro-apellido").value;
+  const usernameSeleccionado = document.getElementById("filtro-username").value;
+  const rolSeleccionado = document.getElementById("filtro-rol").value;
+  const queryParams = new URLSearchParams();
 
-        if (!response.ok) throw new Error("Error al obtener usuarios");
+  if (nombreSeleccionado) queryParams.append("firstName", nombreSeleccionado);
+  if (apellidoSeleccionado) queryParams.append("lastName", apellidoSeleccionado);
+  if (usernameSeleccionado) queryParams.append("username", usernameSeleccionado);
+  if (rolSeleccionado) queryParams.append("role", rolSeleccionado);
 
-        const users = await response.json();
-        llenarTablaUsuarios(users);
-    } catch (error) {
-        alert("No se pudieron cargar los usuarios.");
-        console.error(error);
-    }
+  queryParams.append("page", pagina);
+  queryParams.append("limit", limite);
+
+  try {
+    const res = await fetch(`http://localhost:3000/users/getUsersFiltered?${queryParams.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+    const users = Array.isArray(data) ? data : data.users;
+    const total = data.total ?? (Array.isArray(data) ? data.length : 0);
+
+    cargarUsuarios(users);
+    actualizarPaginacion(total);
+  } catch (error) {
+    console.error("Error al aplicar filtros:", error);
+  }
+}
+function actualizarPaginacion(total) {
+  const totalPaginas = Math.ceil(total / limite);
+  document.getElementById("paginaActual").textContent = `Página ${pagina} de ${totalPaginas}`;
+
+  document.getElementById("btnAnterior").disabled = pagina <= 1;
+  document.getElementById("btnSiguiente").disabled = pagina >= totalPaginas;
 }
 
-function llenarTablaUsuarios(users) {
+
+
+function cargarUsuarios(users) {
   const tbody = document.querySelector("#usersTable tbody");
-  tbody.innerHTML = ""; 
+  tbody.innerHTML = "";
 
   users.forEach(user => {
     const tr = document.createElement("tr");

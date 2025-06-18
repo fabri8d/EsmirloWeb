@@ -1,26 +1,70 @@
 import { checkSession, logout } from "../utils/sessions.js";
+import { showCategories } from "../utils/categories.js";
 const token = localStorage.getItem("token");
+let pagina = 1;
+const limite = 5;
 document.addEventListener("DOMContentLoaded", () => {
 
   if (!checkSession()) return;
-  cargarProductos();
+  aplicarFiltros(1);
+  showCategories();
+  document.getElementById("filtro-categoria").addEventListener("change", (e) => aplicarFiltros(1));
+  document.getElementById("filtro-nombre").addEventListener("change", (e) => aplicarFiltros(1));
+  document.getElementById("btnAnterior").addEventListener("click", () => {
+    if (pagina > 1) aplicarFiltros(pagina - 1);
+  });
+
+  document.getElementById("btnSiguiente").addEventListener("click", () => {
+    aplicarFiltros(pagina + 1);
+  });
 });
 
-async function cargarProductos() {
+
+async function aplicarFiltros(nuevaPagina = 1) {
+  pagina = nuevaPagina;
+
+  const productoSeleccionado = document.getElementById("filtro-nombre").value;
+  const categoriaSeleccionada = document.getElementById("filtro-categoria").value;
+
+  const queryParams = new URLSearchParams();
+  
+  if (productoSeleccionado) queryParams.append("name", productoSeleccionado);
+  if (categoriaSeleccionada) queryParams.append("category", categoriaSeleccionada);
+
+  queryParams.append("page", pagina);
+  queryParams.append("limit", limite);
+
+  try {
+    const res = await fetch(`http://localhost:3000/products/getProductsFiltered?${queryParams.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+    const productos = Array.isArray(data) ? data : data.products;
+    const total = data.total ?? (Array.isArray(data) ? data.length : 0);
+
+    cargarProductos(productos);
+    actualizarPaginacion(total);
+  } catch (error) {
+    console.error("Error al aplicar filtros:", error);
+  }
+}
+
+
+
+function actualizarPaginacion(total) {
+  const totalPaginas = Math.ceil(total / limite);
+  document.getElementById("paginaActual").textContent = `Página ${pagina} de ${totalPaginas}`;
+
+  document.getElementById("btnAnterior").disabled = pagina <= 1;
+  document.getElementById("btnSiguiente").disabled = pagina >= totalPaginas;
+}
+
+async function cargarProductos(productos) {
   const contenedor = document.getElementById("productos-container");
 
   try {
-    const response = await fetch("http://localhost:3000/products/getProducts", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("No se pudieron obtener los productos.");
-    }
-
-    const productos = await response.json();
+    contenedor.innerHTML = "";
 
     productos.forEach((producto) => {
       const row = document.createElement("div");
