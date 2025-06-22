@@ -16,9 +16,11 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.0",
-    "pg": "^8.16.0",
+    "pg": "^8.16.2",
+    "pg-hstore": "^2.3.4",
     "reflect-metadata": "^0.2.2",
     "resend": "^4.5.2",
+    "sequelize": "^6.37.7",
     "typeorm": "^0.3.24"
   },
   "keywords": [],
