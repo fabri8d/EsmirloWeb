@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database'); // ajustá esta ruta según cómo tengas configurada tu conexión
-
+const sequelize = require('../config/database'); 
 const Suscripcion = sequelize.define('Suscripcion', {
   email: {
     type: DataTypes.STRING,
