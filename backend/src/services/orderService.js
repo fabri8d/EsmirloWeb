@@ -99,7 +99,7 @@ async function createOrderService(dataSource, orderData) {
 
   savedOrder.items = orderItems;
 
-  sendEmailOrderUser(user.email, savedOrder);
+  sendEmailOrderUser('leandrobiondi12@gmail.com'/*user.email*/, savedOrder);
   const userRepo = dataSource.getRepository(User);
   const adminUsers = await userRepo.find({ where: { role: "admin" } });
   const adminEmails = adminUsers.map(admin => admin.email);

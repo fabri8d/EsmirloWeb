@@ -84,11 +84,40 @@ async function getUsersFilteredService(dataSource, filters) {
     };
 
 }
+async function subscribeNotificationsService(dataSource, username) {
+  const userRepo = dataSource.getRepository("User");
 
+  const user = await userRepo.findOne({ where: { username } });
+  if (!user) {
+    throw new Error("Usuario no encontrado");
+  }
+  if(user.subscribedToNotifications){
+    throw new Error("Ya se encuentra subscripto.");
+  }
+  user.subscribedToNotifications = true;
+
+  await userRepo.save(user);
+
+  return { message: "Suscripción activada"};
+}
+async function blockUserService(dataSource, id) {
+  const userRepo = dataSource.getRepository("User");
+
+  const user = await userRepo.findOne({ where: { id } });
+  if (!user) {
+    throw new Error("Usuario no encontrado");
+  }
+  user.enabled = !user.enabled;
+
+  await userRepo.save(user);
+}
 module.exports = {
     getUsersService,
     getUserByIdService,
     getUserByUsernameService,
     deleteUserService,
-    getUsersFilteredService
+    getUsersFilteredService,
+    subscribeNotificationsService,
+    blockUserService
+
 };

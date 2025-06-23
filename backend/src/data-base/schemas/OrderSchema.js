@@ -32,8 +32,8 @@ module.exports = new EntitySchema({
     user: {
       type: "many-to-one",
       target: "User",
-      nullable: false,
-      onDelete: "CASCADE"
+      nullable: true,
+      onDelete: "SET NULL",
     },
     items: {
       type: "one-to-many",

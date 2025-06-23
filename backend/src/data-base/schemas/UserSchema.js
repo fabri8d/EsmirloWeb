@@ -13,5 +13,9 @@ module.exports = new EntitySchema({
     email: { type: "varchar", unique: true },
     password: { type: "varchar" },
     role: { type: "enum", enum: ["admin", "customer"], default: "customer" },
-  }
+    enabled: { type: "boolean", default: true },
+    resetCode: { type: "varchar", nullable: true },
+    resetCodeExpires: { type: "timestamp", nullable: true },
+    subscribedToNotifications: { type: "boolean", default: false }
+  },
 });

@@ -65,14 +65,18 @@ function cargarUsuarios(users) {
 
   users.forEach(user => {
     const tr = document.createElement("tr");
+    const textoBoton = user.enabled ? "Bloquear" : "Desbloquear";
+    const estadoTexto = user.enabled ? "Activo" : "Bloqueado";
+
     tr.innerHTML = `
       <td>${user.id}</td>
       <td>${user.username}</td>
       <td>${user.firstName} ${user.lastName}</td>
       <td>${user.email}</td>
       <td>${user.role}</td>
+      <td>${estadoTexto}</td>
       <td>
-        <button class="btn btn-sm btn-secondary" onclick="bloquearUsuario(${user.id})">Bloquear</button>
+        <button class="btn btn-sm btn-secondary" onclick="bloquearUsuario(${user.id})">${textoBoton}</button>
         <button class="btn btn-sm btn-danger" onclick="eliminarUsuario(${user.id})">Eliminar</button>
       </td>
     `;
@@ -80,6 +84,8 @@ function cargarUsuarios(users) {
     tbody.appendChild(tr);
   });
 }
+
+
 
 async function eliminarUsuario(id) {
   if (!confirm("¿Estás seguro de eliminar este usuario?")) return;
@@ -101,7 +107,7 @@ async function eliminarUsuario(id) {
   }
 };
 async function bloquearUsuario(id) {
-  if (!confirm("¿Estás seguro de bloquear este usuario?")) return;
+  if (!confirm("¿Estás seguro de cambiar el estado de este usuario?")) return;
 
   try {
     const response = await fetch(`http://localhost:3000/users/blockUser/${id}`, {
@@ -113,7 +119,7 @@ async function bloquearUsuario(id) {
 
     if (!response.ok) throw new Error();
 
-    alert("Usuario bloqueado correctamente");
+    alert("Se cambió el estado con exito.");
     location.reload();
   } catch (err) {
     alert("Error al bloquear usuario");

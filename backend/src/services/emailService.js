@@ -143,6 +143,33 @@ async function sendEmailOrderAdmin(adminEmail, order) {
     console.error('Error inesperado al enviar correo al admin:', err);
   }
 }
+async function sendResetEmail(email, code) {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'Esmirlo FC <onboarding@resend.dev>',
+      to: 'leandrobiondi12@gmail.com'/*email*/,
+      subject: 'Código de recuperación de contraseña',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2>Recuperación de contraseña - Esmirlo FC</h2>
+          <p>Hola, recibimos una solicitud para restablecer tu contraseña.</p>
+          <p><strong>Tu código de verificación es:</strong></p>
+          <h3 style="background: #f1f1f1; padding: 10px; display: inline-block;">${code}</h3>
+          <p>Este código expirará en 15 minutos.</p>
+          <p>Si no solicitaste esto, ignorá este correo.</p>
+          <br>
+          <p>Gracias,<br>Equipo de Esmirlo FC</p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('Error al enviar correo:', error);
+    }
+  } catch (err) {
+    console.error('Error inesperado al enviar correo:', err);
+  }
+}
 
 
-module.exports = { sendEmailOrderUser, sendEmailOrderAdmin };
+module.exports = { sendEmailOrderUser, sendEmailOrderAdmin, sendResetEmail };

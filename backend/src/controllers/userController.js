@@ -63,10 +63,41 @@ async function getUsersFiltered(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+
+async function subscribeNotifications(req, res) {
+  try {
+    const dataSource = req.app.get("dataSource");
+    const username = req.params.username;
+    const result = await userService.subscribeNotificationsService(dataSource, username);
+    res.json(result);
+  } catch (error) {
+    console.error("Error al actualizar suscripción:", error);
+    if (error.message === "Usuario no encontrado") {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message === "Ya se encuentra subscripto.") {
+      return res.status(409).json({ error: error.message });
+    }
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+}
+async function blockUser(req, res) {
+  try {
+    const dataSource = req.app.get("dataSource");
+    const id = req.params.id;
+    const result = await userService.blockUserService(dataSource, id);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+}
+
 module.exports = {
     getUsers,
     getUserById,
     getUserByUsername,
     deleteUser,
-    getUsersFiltered
+    getUsersFiltered,
+    subscribeNotifications,
+    blockUser
 };

@@ -58,29 +58,39 @@ async function cargarProductos(paginaActual = 1) {
   }
 }
 
-window.logout = logout;
-window.redireccionProductos = redireccionProductos;
-
-// SUSCRIPCIÓN - Captura y envío de email
 document.getElementById('form-suscripcion')?.addEventListener('submit', async function (e) {
   e.preventDefault();
-  const correo = document.getElementById('inputCorreo').value;
+
+  const username = localStorage.getItem('username');
+  const token = localStorage.getItem('token');
+
+  if (!username || !token) {
+    alert('No se encontró el usuario o el token. Por favor, inicia sesión nuevamente.');
+    return;
+  }
 
   try {
-    const res = await fetch('http://localhost:3000/api/suscripciones', {
+    const res = await fetch(`http://localhost:3000/users/subscribe/${username}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: correo })
+      headers: { 
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}` 
+      },
     });
 
     if (!res.ok) throw new Error('Error en la suscripción');
 
-    document.getElementById('form-suscripcion').reset();
+    this.reset();
     const mensaje = document.getElementById('mensajeSuscripcion');
     mensaje.classList.remove('d-none');
     setTimeout(() => mensaje.classList.add('d-none'), 4000);
   } catch (error) {
-    console.error('Error al enviar suscripción:', error.message);
-    alert('Hubo un problema con tu suscripción. Intentalo más tarde.');
+    console.error('Ya se encuentra subscripto ', error.message);
+    alert('Ya se encuentra subscripto.');
   }
 });
+
+
+
+window.logout = logout;
+window.redireccionProductos = redireccionProductos;
